@@ -193,7 +193,7 @@ function warehouse_module_init_menu_items()
 
        $CI->app_menu->add_sidebar_menu_item('warehouse', [
             'name'     => _l('warehouse'),
-            'icon'     => 'fa fa-snowflake-o',
+            'icon'     => 'fas fa-snowflake',
             'position' => 30,
         ]);
         

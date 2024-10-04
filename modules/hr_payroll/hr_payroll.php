@@ -86,7 +86,7 @@ function hr_payroll_module_init_menu_items()
         $CI->app_menu->add_sidebar_children_item('hr_payroll', [
             'slug'     => 'hr_manage_employees',
             'name'     => _l('hr_manage_employees'),
-            'icon'     => 'fa fa-vcard-o',
+            'icon'     => 'fas fa-vcard',
             'href'     => admin_url('hr_payroll/manage_employees'),
             'position' => 1,
         ]);
@@ -96,7 +96,7 @@ function hr_payroll_module_init_menu_items()
         $CI->app_menu->add_sidebar_children_item('hr_payroll', [
             'slug'     => 'hr_manage_attendance',
             'name'     => _l('hr_manage_attendance'),
-            'icon'     => 'fa fa-pencil-square-o menu-icon',
+            'icon'     => 'fas fa-pencil-square menu-icon',
             'href'     => admin_url('hr_payroll/manage_attendance'),
             'position' => 2,
         ]);
@@ -168,7 +168,7 @@ function hr_payroll_module_init_menu_items()
         $CI->app_menu->add_sidebar_children_item('hr_payroll', [
             'slug'     => 'hrp_income_tax',
             'name'     => _l('hrp_income_tax'),
-            'icon'     => 'fa fa-calendar-minus-o',
+            'icon'     => 'fas fa-calendar-minus',
             'href'     => admin_url('hr_payroll/income_taxs_manage'),
             'position' => 9,
         ]);

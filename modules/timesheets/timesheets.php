@@ -174,7 +174,7 @@ function timesheets_module_init_menu_items() {
 				'slug' => 'timesheets_timekeeping',
 				'name' => _l('attendance'),
 				'href' => admin_url('timesheets/timekeeping'),
-				'icon' => 'fa fa-pencil-square-o',
+				'icon' => 'fas fa-pencil-square',
 				'position' => 1,
 			]);
 		}

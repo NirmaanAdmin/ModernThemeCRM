@@ -42,7 +42,7 @@
                                     echo 'active ';
                                 } ?>mail_tab_<?php echo $group; ?>">
                         <a data-group="sent" href="<?php echo admin_url('mailbox?group=sent'); ?>">
-                            <i class="fa fa-envelope-o menu-icon" aria-hidden="true"></i>
+                            <i class="fas fa-envelope menu-icon" aria-hidden="true"></i>
                             <?php echo _l('mailbox_sent'); ?>
                         </a>
                     </li>
@@ -58,7 +58,7 @@
                                     echo 'active ';
                                 } ?>mail_tab_<?php echo $group; ?>">
                         <a data-group="draft" href="<?php echo admin_url('mailbox?group=draft'); ?>">
-                            <i class="fa fa-file-o menu-icon" aria-hidden="true"></i>
+                            <i class="fas fa-file menu-icon" aria-hidden="true"></i>
                             <?php echo _l('mailbox_draft'); ?>
                         </a>
                     </li>
@@ -66,7 +66,7 @@
                                     echo 'active ';
                                 } ?>mail_tab_<?php echo $group; ?>">
                         <a data-group="trash" href="<?php echo admin_url('mailbox?group=trash'); ?>">
-                            <i class="fa fa-trash-o menu-icon" aria-hidden="true"></i>
+                            <i class="fas fa-trash menu-icon" aria-hidden="true"></i>
                             <?php echo _l('mailbox_trash'); ?>
                         </a>
                     </li>

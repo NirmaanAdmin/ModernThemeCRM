@@ -155,7 +155,7 @@ function hr_profile_module_init_menu_items()
 		$CI->app_menu->add_sidebar_children_item('hr_profile', [
 			'slug'     => 'hr_profile_dependent_person',
 			'name'     => _l('hr_dependent_persons'),
-			'icon'     => 'fa fa-address-card-o',
+			'icon'     => 'fas fa-address-card',
 			'href'     => admin_url('hr_profile/dependent_persons'),
 			'position' => 7,
 		]);
