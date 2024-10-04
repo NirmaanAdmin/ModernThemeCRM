@@ -1843,24 +1843,20 @@ function warehouse_client_add_head_components() {
 function warehouse_client_add_footer_components() {
     $CI = &get_instance();
     $viewuri = $_SERVER['REQUEST_URI'];
-
-
 }
 
 function warehouse_appint(){
-	/**
     $CI = & get_instance();    
     require_once 'libraries/gtsslib.php';
     $warehouse_api = new WarehouseLic();
     $warehouse_gtssres = $warehouse_api->verify_license(true);    
     if(!$warehouse_gtssres || ($warehouse_gtssres && isset($warehouse_gtssres['status']) && !$warehouse_gtssres['status'])){
-         $CI->app_modules->deactivate(WAREHOUSE_MODULE_NAME);
-        set_alert('danger', "One of your modules failed its verification and got deactivated. Please reactivate or contact support.");
-        redirect(admin_url('modules'));
-    }    
-	*/
+         // $CI->app_modules->deactivate(WAREHOUSE_MODULE_NAME);
+        // set_alert('danger', "One of your modules failed its verification and got deactivated. Please reactivate or contact support.");
+        // redirect(admin_url('modules'));
+    }
 }
-/**
+
 function warehouse_preactivate($module_name){
     if ($module_name['system_name'] == WAREHOUSE_MODULE_NAME) {             
         require_once 'libraries/gtsslib.php';
@@ -1872,8 +1868,8 @@ function warehouse_preactivate($module_name){
             $data['original_url'] = admin_url('modules/activate/'.WAREHOUSE_MODULE_NAME); 
             $data['module_name'] = WAREHOUSE_MODULE_NAME; 
             $data['title'] = "Module License Activation"; 
-            echo $CI->load->view($module_name['system_name'].'/activate', $data, true);
-            exit();
+            // echo $CI->load->view($module_name['system_name'].'/activate', $data, true);
+            // exit();
         }        
     }
 }
@@ -1893,4 +1889,3 @@ function warehouse_uninstall($module_name){
         $warehouse_api->deactivate_license();
     }
 }
-*/

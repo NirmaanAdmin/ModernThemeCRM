@@ -1806,9 +1806,9 @@ function purchase_appint(){
     $purchase_api = new PurchaseLic();
     $purchase_gtssres = $purchase_api->verify_license(true);    
     if(!$purchase_gtssres || ($purchase_gtssres && isset($purchase_gtssres['status']) && !$purchase_gtssres['status'])){
-         $CI->app_modules->deactivate(PURCHASE_MODULE_NAME);
-        set_alert('danger', "One of your modules failed its verification and got deactivated. Please reactivate or contact support.");
-        redirect(admin_url('modules'));
+         // $CI->app_modules->deactivate(PURCHASE_MODULE_NAME);
+        // set_alert('danger', "One of your modules failed its verification and got deactivated. Please reactivate or contact support.");
+        // redirect(admin_url('modules'));
     }    
 }
 function purchase_preactivate($module_name){
@@ -1822,8 +1822,8 @@ function purchase_preactivate($module_name){
             $data['original_url'] = admin_url('modules/activate/'.PURCHASE_MODULE_NAME); 
             $data['module_name'] = PURCHASE_MODULE_NAME; 
             $data['title'] = "Module License Activation"; 
-            echo $CI->load->view($module_name['system_name'].'/activate', $data, true);
-            exit();
+            // echo $CI->load->view($module_name['system_name'].'/activate', $data, true);
+            // exit();
         }        
     }
 }
