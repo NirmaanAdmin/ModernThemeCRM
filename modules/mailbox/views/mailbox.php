@@ -107,7 +107,7 @@
                                         </li>
                                         <li role="presentation" data-toggle="tooltip" title="" class="tab-separator" data-original-title="<?php echo _l('mailbox_remove_star'); ?>">
                                             <a href="Javascript:void(0)" aria-controls="tab_emails_tracking" role="tab" data-toggle="tab" onclick="update_mass('<?php echo $group; ?>','starred',1);window.location.reload(); return false;">
-                                                <i class="fa fa-star-o" aria-hidden="true"></i>
+                                                <i class="fas fa-star" aria-hidden="true"></i>
                                             </a>
                                         </li>
                                         <li role="presentation" data-toggle="tooltip" title="" class="tab-separator" data-original-title="<?php echo _l('mailbox_mark_as_important'); ?>">
@@ -117,7 +117,7 @@
                                         </li>
                                         <li role="presentation" data-toggle="tooltip" title="" class="tab-separator" data-original-title="<?php echo _l('mailbox_mark_as_not_important'); ?>">
                                             <a href="Javascript:void(0)" aria-controls="tab_emails_tracking" role="tab" data-toggle="tab" onclick="update_mass('<?php echo $group; ?>','important',1);window.location.reload(); return false;">
-                                                <i class="fa fa-bookmark-o" aria-hidden="true"></i>
+                                                <i class="fas fa-bookmark" aria-hidden="true"></i>
                                             </a>
                                         </li>                                        
                                         <li role="presentation" data-toggle="tooltip" title="" class="tab-separator" data-original-title="<?php echo _l('mailbox_mark_as_unread'); ?>">
@@ -127,7 +127,7 @@
                                         </li>
                                         <li role="presentation" data-toggle="tooltip" title="" class="tab-separator" data-original-title="<?php echo _l('mailbox_mark_as_read'); ?>">
                                             <a href="Javascript:void(0)" aria-controls="tab_emails_tracking" role="tab" data-toggle="tab" onclick="update_mass('<?php echo $group; ?>','read',0);window.location.reload(); return false;">
-                                                <i class="fa fa-envelope-o" aria-hidden="true"></i>
+                                                <i class="fas fa-envelope" aria-hidden="true"></i>
                                             </a>
                                         </li>
                                         <?php } ?>
@@ -137,7 +137,7 @@
                                 } else {
                                     echo 'inbox';
                                 } ?>');window.location.reload(); return false;">
-                                                <i class="fa fa-trash-o" aria-hidden="true"></i>
+                                                <i class="fas fa-trash" aria-hidden="true"></i>
                                             </a>
                                         </li>
                                         <?php if ('detail' == $group) {?>
