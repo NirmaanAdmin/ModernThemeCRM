@@ -162,12 +162,12 @@ function app_init_settings_tabs()
         'icon'     => 'fa-solid fa-receipt',
     ]);
 
-    $CI->app_tabs->add_settings_tab('subscriptions', [
-        'name'     => _l('subscriptions'),
-        'view'     => 'admin/settings/includes/subscriptions',
-        'position' => 30,
-        'icon'     => 'fa fa-repeat',
-    ]);
+    // $CI->app_tabs->add_settings_tab('subscriptions', [
+    //     'name'     => _l('subscriptions'),
+    //     'view'     => 'admin/settings/includes/subscriptions',
+    //     'position' => 30,
+    //     'icon'     => 'fa fa-repeat',
+    // ]);
 
     $CI->app_tabs->add_settings_tab('payment_gateways', [
         'name'     => _l('settings_group_online_payment_modes'),
