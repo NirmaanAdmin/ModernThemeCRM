@@ -69,6 +69,10 @@
                 <a href="<?php echo site_url('authentication/forgot_password'); ?>">
                     <?php echo _l('customer_forgot_password'); ?>
                 </a>
+                <br />
+                <a href="<?php echo base_url('admin/authentication'); ?>" style="font-weight: 500;">
+                    Staff? Login Here >>
+                </a>
                 <?php hooks()->do_action('clients_login_form_end'); ?>
                 <?php echo form_close(); ?>
             </div>

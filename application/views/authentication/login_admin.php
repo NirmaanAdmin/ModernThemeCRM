@@ -57,6 +57,10 @@
                 <a href="<?php echo admin_url('authentication/forgot_password'); ?>">
                     <?php echo _l('admin_auth_login_fp'); ?>
                 </a>
+                <br />
+                <a href="<?php echo base_url('authentication/login'); ?>" style="font-weight: 500;">
+                    Client? Login Here >>
+                </a>
             </div>
 
             <?php hooks()->do_action('before_admin_login_form_close'); ?>
