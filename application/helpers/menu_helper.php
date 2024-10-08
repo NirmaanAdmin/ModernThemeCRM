@@ -494,15 +494,15 @@ function app_init_admin_sidebar_menu_items()
 
         $modulesNeedsUpgrade = $CI->app_modules->number_of_modules_that_require_database_upgrade();
 
-        $CI->app_menu->add_setup_menu_item('modules', [
-            'href'     => admin_url('modules'),
-            'name'     => _l('modules'),
-            'position' => 35,
-            'badge'    => [
-                'value' => $modulesNeedsUpgrade > 0 ? $modulesNeedsUpgrade : null,
-                'type' => 'warning',
-            ],
-        ]);
+        // $CI->app_menu->add_setup_menu_item('modules', [
+        //     'href'     => admin_url('modules'),
+        //     'name'     => _l('modules'),
+        //     'position' => 35,
+        //     'badge'    => [
+        //         'value' => $modulesNeedsUpgrade > 0 ? $modulesNeedsUpgrade : null,
+        //         'type' => 'warning',
+        //     ],
+        // ]);
 
         $CI->app_menu->add_setup_menu_item('custom-fields', [
             'href'     => admin_url('custom_fields'),
@@ -511,12 +511,12 @@ function app_init_admin_sidebar_menu_items()
             'badge'    => [],
         ]);
 
-        $CI->app_menu->add_setup_menu_item('gdpr', [
-            'href'     => admin_url('gdpr'),
-            'name'     => _l('gdpr_short'),
-            'position' => 50,
-            'badge'    => [],
-        ]);
+        // $CI->app_menu->add_setup_menu_item('gdpr', [
+        //     'href'     => admin_url('gdpr'),
+        //     'name'     => _l('gdpr_short'),
+        //     'position' => 50,
+        //     'badge'    => [],
+        // ]);
 
         $CI->app_menu->add_setup_menu_item('roles', [
             'href'     => admin_url('roles'),
