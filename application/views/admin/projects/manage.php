@@ -87,7 +87,7 @@
 <?php init_tail(); ?>
 <script>
 $(function() {
-    initDataTable('.table-projects', admin_url + 'projects/table', undefined, undefined, {},
+    initDataTable('.table-projects', admin_url + 'projects/table', [8,9], [8,9], {},
         <?php echo hooks()->apply_filters('projects_table_default_order', json_encode([5, 'asc'])); ?>);
 
     $('.table-projects').DataTable().on('draw', function() {
