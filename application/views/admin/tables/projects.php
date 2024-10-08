@@ -100,6 +100,20 @@ return App_table::find('projects')
 
             $row[] = render_tags($aRow['tags']);
 
+            ob_start();
+            $percent = $this->ci->projects_model->calc_progress($aRow['id']);
+            $progress_bar_percent = $percent / 100; ?>
+            <input type="hidden" value="<?php
+            echo '' . $progress_bar_percent; ?>" name="percent">
+            <div class="goal-progress" data-reverse="true">
+               <strong class="goal-percent pr-goal-percent"><?php
+                echo '' . $percent; ?>%</strong>
+            </div>
+            <?php
+            $progress = ob_get_contents();
+            ob_end_clean();
+            $row[] = $progress;
+
             $row[] = e(_d($aRow['start_date']));
 
             $row[] = e(_d($aRow['deadline']));
@@ -126,6 +140,9 @@ return App_table::find('projects')
             $membersOutput .= '<span class="hide">' . trim($exportMembers, ', ') . '</span>';
             $membersOutput .= '</div>';
             $row[] = $membersOutput;
+
+            $options = icon_btn('project_roadmap/view_project_roadmap/' . $aRow['id'], 'fa fa-eye', 'btn-default', $data_title);
+            $row[] =  $options;
 
             $status = get_project_status_by_id($aRow['status']);
             $row[]  = '<span class="label project-status-' . $aRow['status'] . '" style="color:' . $status['color'] . ';border:1px solid ' . adjust_hex_brightness($status['color'], 0.4) . ';background: ' . adjust_hex_brightness($status['color'], 0.04) . ';">' . e($status['name']) . '</span>';
