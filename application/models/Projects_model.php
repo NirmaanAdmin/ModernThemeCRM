@@ -2650,4 +2650,36 @@ class Projects_model extends App_Model
             ->excludeMilestonesFromCustomer(isset($type_where['hide_from_customer']) && $type_where['hide_from_customer'] == 1)
             ->get();
     }
+
+    /**
+     * Gets the items.
+     *
+     * @return     <array>  The items.
+     */
+    public function get_items()
+    {
+       $result = array();
+       $projects = $this->db->query('select id, name, (SELECT GROUP_CONCAT(' . db_prefix() . 'project_members.staff_id SEPARATOR ",") FROM ' . db_prefix() . 'project_members WHERE ' . db_prefix() . 'project_members.project_id=' . db_prefix() . 'projects.id) as member_list from '.db_prefix().'projects')->result_array();
+
+       if(!empty($projects)) {
+            foreach ($projects as $key => $value) {
+                if(is_admin()) {
+                    $result[] = $value;
+                } else {
+                    $member_list = $value['member_list'];
+                    if(!empty($member_list)) {
+                        $member_list = explode(",", $member_list);
+                        if (in_array(get_staff_user_id(), $member_list)) {
+                            $result[] = $value;
+                        }
+                    }
+                }
+            }
+            if(!empty($result)) {
+                $result = array_values($result);
+            }
+       }
+
+       return $result;
+    }
 }

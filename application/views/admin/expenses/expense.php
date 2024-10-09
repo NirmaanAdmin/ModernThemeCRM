@@ -106,14 +106,14 @@
                         } ?>
                             </select>
                         </div>
-                        <?php $hide_project_selector = ' hide';
+                        <?php $hide_project_selector = ' show';
                      // Show selector only if expense is already added and there is no client linked to the expense or isset customer id
                      if ((isset($expense) && $expense->clientid) || isset($customer_id)) {
                          $hide_project_selector = '';
                      }
                      ?>
                         <div class="form-group projects-wrapper<?php echo e($hide_project_selector); ?>">
-                            <label for="project_id"><?php echo _l('project'); ?></label>
+                            <?php /* <label for="project_id"><?php echo _l('project'); ?></label>
                             <div id="project_ajax_search_wrapper">
                                 <select name="project_id" id="project_id" class="projects ajax-search"
                                     data-live-search="true" data-width="100%"
@@ -124,6 +124,11 @@
                            ?>
                                 </select>
                             </div>
+                            */ ?>
+                            <?php 
+                                $project_selected = (isset($expense) && $expense->project_id != 0) ? $expense->project_id : '';
+                                echo render_select('project_id',$projects,array('id','name'),'project',$project_selected);
+                            ?>
                         </div>
                         <?php $rel_id = (isset($expense) ? $expense->expenseid : false); ?>
                         <?php echo render_custom_fields('expenses', $rel_id); ?>
@@ -433,6 +438,7 @@ $(function() {
         date: 'required',
         amount: 'required',
         currency: 'required',
+        project_id:'required',
         repeat_every_custom: {
             min: 1
         },
@@ -566,22 +572,22 @@ function subtract_tax_amount_from_expense_total() {
 
 function customer_init() {
     var customer_id = $('select[name="clientid"]').val();
-    var projectAjax = $('select[name="project_id"]');
-    var clonedProjectsAjaxSearchSelect = projectAjax.html('').clone();
-    var projectsWrapper = $('.projects-wrapper');
-    projectAjax.selectpicker('destroy').remove();
-    projectAjax = clonedProjectsAjaxSearchSelect;
-    $('#project_ajax_search_wrapper').append(clonedProjectsAjaxSearchSelect);
-    init_ajax_project_search_by_customer_id();
+    // var projectAjax = $('select[name="project_id"]');
+    // var clonedProjectsAjaxSearchSelect = projectAjax.html('').clone();
+    // var projectsWrapper = $('.projects-wrapper');
+    // projectAjax.selectpicker('destroy').remove();
+    // projectAjax = clonedProjectsAjaxSearchSelect;
+    // $('#project_ajax_search_wrapper').append(clonedProjectsAjaxSearchSelect);
+    // init_ajax_project_search_by_customer_id();
     if (!customer_id) {
         set_base_currency();
-        projectsWrapper.addClass('hide');
+        // projectsWrapper.addClass('hide');
     }
     $.get(admin_url + 'expenses/get_customer_change_data/' + customer_id, function(response) {
         if (customer_id && response.customer_has_projects) {
-            projectsWrapper.removeClass('hide');
+            // projectsWrapper.removeClass('hide');
         } else {
-            projectsWrapper.addClass('hide');
+            // projectsWrapper.addClass('hide');
         }
         var client_currency = parseInt(response.client_currency);
         if (client_currency != 0) {
