@@ -239,7 +239,7 @@
                         $use_knowledge_base = get_option('use_knowledge_base');
                         ?>
                                         <div class="row mbot15">
-                                            <div class="col-md-6">
+                                            <div class="col-md-6 hide">
                                                 <select data-width="100%" id="insert_predefined_reply"
                                                     data-live-search="true" class="selectpicker"
                                                     data-title="<?php echo _l('ticket_single_insert_predefined_reply'); ?>">
@@ -253,7 +253,7 @@
                                             <div class="visible-xs">
                                                 <div class="mtop15"></div>
                                             </div>
-                                            <div class="col-md-6">
+                                            <div class="col-md-6 hide">
                                                 <?php $groups = get_all_knowledge_base_articles_grouped(); ?>
                                                 <select data-width="100%" id="insert_knowledge_base_link"
                                                     class="selectpicker" data-live-search="true"
@@ -297,7 +297,7 @@
                                         <div>
                                             <div class="row">
                                                 <div class="col-md-5">
-                                                    <?php echo render_select('status', $statuses, ['ticketstatusid', 'name'], 'ticket_single_change_status', get_option('default_ticket_reply_status'), [], [], '', '', false); ?>
+                                                    <?php echo render_select('status', $statuses, ['ticketstatusid', 'name'], 'ticket_single_change_status', $ticket->status, [], [], '', '', false); ?>
                                                     <?php echo render_input('cc', 'CC', $ticket->cc); ?>
                                                     <?php if ($ticket->assigned !== get_staff_user_id()) { ?>
                                                     <div class="checkbox">
@@ -407,23 +407,19 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <?php echo render_input('subject', 'ticket_settings_subject', $ticket->subject); ?>
+
+                                        <div class="form-group projects-wrapper">
+                                           <?php
+                                              echo render_select('project_id', $projects, array('id','name'), 'project', $ticket->project_id, array('required'=>'true'));
+                                           ?>
+                                        </div>
+
                                         <div class="form-group select-placeholder">
-                                            <label for="contactid"
-                                                class="control-label"><?php echo _l('contact'); ?></label>
-                                            <select name="contactid" id="contactid" class="ajax-search"
-                                                data-width="100%" data-live-search="true"
-                                                data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>" <?php if (!$ticket->userid) {
-                                   echo ' data-no-contact="true"';
-                               } else {
-                                   echo ' data-ticket-emails="' . $ticket->ticket_emails . '"';
-                               } ?>>
-                                                <?php
-                              $rel_data = get_relation_data('contact', $ticket->contactid);
-                              $rel_val  = get_relation_values($rel_data, 'contact');
-                              echo '<option value="' . $rel_val['id'] . '" selected data-subtext="' . $rel_val['subtext'] . '">' . $rel_val['name'] . '</option>';
-                              ?>
-                                            </select>
-                                            <?php echo form_hidden('userid', $ticket->userid); ?>
+                                           <label for="contactid"><?php echo _l('contact'); ?></label>
+                                           <select name="contactid" id="contactid" class="selectpicker" data-width="100%" data-live-search="true" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>" data-actions-box="true" required="true">
+                                           </select>
+                                           <?php echo form_hidden('contact_db_id',$ticket->contactid); ?>
+                                           <?php echo form_hidden('userid',$ticket->userid); ?>
                                         </div>
                                         <div class="row">
                                             <div class="col-md-6">
@@ -470,17 +466,19 @@
                                             </select>
                                         </div>
                                         <div class="row">
-                                            <div class="col-md-<?php if (get_option('services') == 1) {
-                                 echo 6;
-                             } else {
-                                 echo 12;
-                             } ?>">
+                                            <div class="col-md-6">
                                                 <?php
                            $priorities['callback_translate'] = 'ticket_priority_translate';
                            echo render_select('priority', $priorities, ['priorityid', 'name'], 'ticket_settings_priority', $ticket->priority); ?>
                                             </div>
-                                            <?php if (get_option('services') == 1) { ?>
                                             <div class="col-md-6">
+                                               <?php 
+                                               $value = (isset($ticket) ? _d($ticket->duedate) : '');
+                                               echo render_date_input('duedate', 'task_add_edit_due_date', $value);
+                                               ?>
+                                            </div>
+                                            <?php if (get_option('services') == 1) { ?>
+                                            <div class="col-md-6 hide">
                                                 <?php if (is_admin() || get_option('staff_members_create_inline_ticket_services') == '1') {
                                echo render_select_with_input_group('service', $services, ['serviceid', 'name'], 'ticket_settings_service', $ticket->service, '<div class="input-group-btn"><a href="#" class="btn btn-default" onclick="new_service();return false;"><i class="fa fa-plus"></i></a></div>');
                            } else {
@@ -489,22 +487,6 @@
                               ?>
                                             </div>
                                             <?php } ?>
-                                        </div>
-                                        <div class="form-group select-placeholder projects-wrapper<?php if ($ticket->userid == 0) {
-                                  echo ' hide';
-                              } ?>">
-                                            <label for="project_id"><?php echo _l('project'); ?></label>
-                                            <div id="project_ajax_search_wrapper">
-                                                <select name="project_id" id="project_id" class="projects ajax-search"
-                                                    data-live-search="true" data-width="100%"
-                                                    data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
-                                                    <?php if ($ticket->project_id) { ?>
-                                                    <option value="<?php echo e($ticket->project_id); ?>">
-                                                        <?php echo e(get_project_name_by_id($ticket->project_id)); ?>
-                                                    </option>
-                                                    <?php } ?>
-                                                </select>
-                                            </div>
                                         </div>
                                         <div class="row">
                                             <div class="col-md-6">
@@ -817,15 +799,8 @@ var _ticket_message;
 <?php hooks()->do_action('ticket_admin_single_page_loaded', $ticket); ?>
 <script>
 $(function() {
+    $('#project_id').trigger('change');
     $('#single-ticket-form').appFormValidator();
-    init_ajax_search('contact', '#contactid.ajax-search', {
-        tickets_contacts: true
-    });
-    init_ajax_search('project', 'select[name="project_id"]', {
-        customer_id: function() {
-            return $('input[name="userid"]').val();
-        }
-    });
     $('body').on('shown.bs.modal', '#_task_modal', function() {
         if (typeof(_ticket_message) != 'undefined') {
             // Init the task description editor

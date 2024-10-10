@@ -114,6 +114,7 @@ class Tickets extends AdminController
                 }
             }
         }
+        $data['projects'] = $this->projects_model->get_items();
         add_admin_tickets_js_assets();
         $this->load->view('admin/tickets/add', $data);
     }
@@ -253,6 +254,7 @@ class Tickets extends AdminController
         $data['bodyclass']            = 'top-tabs ticket single-ticket';
         $data['title']                = $data['ticket']->subject;
         $data['ticket']->ticket_notes = $this->misc_model->get_notes($id, 'ticket');
+        $data['projects'] = $this->projects_model->get_items();
         add_admin_tickets_js_assets();
         $this->load->view('admin/tickets/single', $data);
     }
@@ -786,5 +788,17 @@ class Tickets extends AdminController
                 set_alert('success', _l('tickets_merged'));
             }
         }
+    }
+
+    public function find_project_contact() 
+    {
+        $response = array();
+        if ($this->input->post()) {
+            $data = $this->input->post();
+            if(!empty($data['project_id'])) {
+                $response = $this->tickets_model->find_project_contact($data['project_id']);
+            }
+        }
+        echo json_encode($response);
     }
 }

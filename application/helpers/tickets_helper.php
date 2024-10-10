@@ -255,7 +255,7 @@ $(function() {
                 if ($('#savePredefinedReplyFromMessage').length == 0) {
                     $('[app-field-wrapper="message"] [role="menubar"]:first')
                         .append(
-                            "<button id=\"savePredefinedReplyFromMessage\" data-toggle=\"modal\" type=\"button\" data-target=\"#savePredefinedReplyFromMessageModal\" class=\"tox-mbtn save_predefined_reply_from_message pointer\" href=\"#\"><?php echo _l('save_message_as_predefined_reply'); ?></button>"
+                            "<button id=\"savePredefinedReplyFromMessage\" data-toggle=\"modal\" type=\"button\" data-target=\"#savePredefinedReplyFromMessageModal\" class=\"tox-mbtn save_predefined_reply_from_message pointer\" href=\"#\"></button>"
                         );
                 }
                 // For open is handled on contact select
@@ -272,6 +272,19 @@ $(function() {
             } else {
                 $('#savePredefinedReplyFromMessage').remove();
                 clear_ticket_no_contact_email_warning();
+            }
+        });
+
+        if(editorMessage.getContent().trim() == '') {
+            $('button[data-form=#single-ticket-form]').attr('disabled', true);
+        } else {
+            $('button[data-form=#single-ticket-form]').attr('disabled', false);
+        }
+        editorMessage.on('keyup',function(){
+            if(editorMessage.getContent().trim() == '') {
+                $('button[data-form=#single-ticket-form]').attr('disabled', true);
+            } else {
+                $('button[data-form=#single-ticket-form]').attr('disabled', false);
             }
         });
     }
