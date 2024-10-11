@@ -541,8 +541,8 @@ $lang['new_ticket']                                          = 'Open New RFI';
 $lang['tickets']                                             = 'RFI';
 $lang['ticket']                                              = 'RFI';
 $lang['ticket_lowercase']                                    = 'RFI';
-$lang['support_tickets']                                     = 'Support RFI';
-$lang['support_ticket']                                      = 'Support RFI';
+$lang['support_tickets']                                     = 'RFI';
+$lang['support_ticket']                                      = 'RFI';
 $lang['ticket_settings_to']                                  = 'Name';
 $lang['ticket_settings_email']                               = 'Email address';
 $lang['ticket_settings_departments']                         = 'Department';
@@ -791,7 +791,7 @@ $lang['clients_article_voted_thanks_for_feedback'] = 'Thanks for your feedback';
 # RFI
 $lang['clients_ticket_open_subject']               = 'Open RFI';
 $lang['clients_ticket_open_departments']           = 'Department';
-$lang['clients_tickets_heading']                   = 'Support RFI';
+$lang['clients_tickets_heading']                   = 'RFI';
 $lang['clients_ticket_open_service']               = 'Service';
 $lang['clients_ticket_open_priority']              = 'Priority';
 $lang['clients_ticket_open_body']                  = 'RFI Body';
@@ -907,7 +907,7 @@ $lang['clients_successfully_registered']           = 'Thank your for registering
 $lang['clients_account_created_but_not_logged_in'] = 'Your account has been created but you are not logged in our system automatically. Please try to login';
 
 # RFI
-$lang['clients_tickets_heading'] = 'Support RFI';
+$lang['clients_tickets_heading'] = 'RFI';
 
 # Payments
 $lang['payment_for_invoice'] = 'Payment for Invoice';
