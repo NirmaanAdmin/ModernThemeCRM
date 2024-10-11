@@ -50,7 +50,7 @@
 								</div>
 								<div class="pull-right">
 									<?php if((has_permission('warehouse', '', 'edit') || is_admin()) && ($order_return->approval == 0)){ ?>
-										<a href="<?php echo admin_url('warehouse/order_return/'.$order_return->rel_type.'/'.$order_return->id); ?>" data-toggle="tooltip" title="<?php echo _l('edit'); ?>" class="btn btn-default btn-with-tooltip" data-placement="bottom"><i class="fa fa-pencil-square-o"></i></a>
+										<a href="<?php echo admin_url('warehouse/order_return/'.$order_return->rel_type.'/'.$order_return->id); ?>" data-toggle="tooltip" title="<?php echo _l('edit'); ?>" class="btn btn-default btn-with-tooltip" data-placement="bottom"><i class="fa fa-pencil-square"></i></a>
 									<?php } ?>
 									<div class="btn-group">
 										<a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-file-pdf-o"></i><?php if(is_mobile()){echo ' PDF';} ?> <span class="caret"></span></a>
