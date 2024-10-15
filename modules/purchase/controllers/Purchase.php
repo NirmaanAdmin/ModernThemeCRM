@@ -267,7 +267,8 @@ class purchase extends AdminController
         $data['item_group'] = $this->purchase_model->get_item_group();
         $data['approval_setting'] = $this->purchase_model->get_approval_setting();
         $data['vendor_categories'] = $this->purchase_model->get_vendor_category();
-        $data['staffs'] = $this->staff_model->get(); 
+        $data['staffs'] = $this->staff_model->get();
+        $data['projects'] = $this->projects_model->get_items();  
         
         $this->load->view('manage_setting', $data);
     }
@@ -677,6 +678,7 @@ class purchase extends AdminController
         $data['list_approve_status'] = $this->purchase_model->get_list_approval_details($id,'pur_request');
         $data['taxes'] = $this->purchase_model->get_taxes();
         $data['pur_request_attachments'] = $this->purchase_model->get_purchase_request_attachments($id);
+        $data['check_approval_setting'] = $this->purchase_model->check_approval_setting($data['pur_request']->project,'pur_request',0);
 
         $this->load->view('purchase_request/view_pur_request', $data);
 
@@ -934,6 +936,7 @@ class purchase extends AdminController
         $data['vendors'] = $this->purchase_model->get_vendor();
         $data['pur_request'] = $this->purchase_model->get_pur_request_by_status(2);
         $data['units'] = $this->purchase_model->get_units();
+        $data['projects'] = $this->projects_model->get();
        
         $data['title']             = $title;
         $this->load->view('quotations/estimate', $data);
@@ -1032,6 +1035,7 @@ class purchase extends AdminController
         $data['check_approve_status'] = $this->purchase_model->check_approval_details($id,'pur_quotation');
         $data['list_approve_status'] = $this->purchase_model->get_list_approval_details($id,'pur_quotation');
         $data['tax_data'] = $this->purchase_model->get_html_tax_pur_estimate($id);
+        $data['check_approval_setting'] = $this->purchase_model->check_approval_setting($estimate->project,'pur_quotation',0);
         
         if ($to_return == false) {
             $this->load->view('quotations/estimate_preview_template', $data);
@@ -1473,6 +1477,7 @@ class purchase extends AdminController
         $data['check_approve_status'] = $this->purchase_model->check_approval_details($id,'pur_order');
         $data['list_approve_status'] = $this->purchase_model->get_list_approval_details($id,'pur_order');
         $data['tax_data'] = $this->purchase_model->get_html_tax_pur_order($id);
+        $data['check_approval_setting'] = $this->purchase_model->check_approval_setting($estimate->project,'pur_order',0);
         
         if ($to_return == false) {
             $this->load->view('purchase_order/pur_order_preview', $data);
@@ -5343,6 +5348,10 @@ class purchase extends AdminController
                                 $flag = 1;
                             }
 
+                            if(empty($value_unit_id)) {
+                                $value_unit_id = 1;
+                            }
+
                             //check unit_code exist  (input: id or name contract)
                             if (is_null($value_unit_id) != true && ( $value_unit_id != '0') && $value_unit_id != '') {
                                 /*case input id*/
@@ -5385,7 +5394,7 @@ class purchase extends AdminController
                                     }
                                 } else {
                                     /*case input name*/
-                                    $this->db->like(db_prefix() . 'items_groups.commodity_group_code', $value_commodity_group);
+                                    $this->db->like(db_prefix() . 'items_groups.name', $value_commodity_group);
                                     $commodity_group_value = $this->db->get(db_prefix() . 'items_groups')->result_array();
                                     if (count($commodity_group_value) == 0) {
                                         $string_error .= _l('commodity_group') . _l('does_not_exist');
@@ -5466,7 +5475,7 @@ class purchase extends AdminController
                                     }
                                 } else {
                                     /*case input  name*/
-                                    $this->db->like(db_prefix() . 'wh_sub_group.sub_group_code', $value_sub_group);
+                                    $this->db->like(db_prefix() . 'wh_sub_group.sub_group_name', $value_sub_group);
                                     $sub_group_value = $this->db->get(db_prefix() . 'wh_sub_group')->result_array();
                                     if (count($sub_group_value) == 0) {
                                         $string_error .= _l('sub_group') . _l('does_not_exist');
@@ -8670,6 +8679,27 @@ class purchase extends AdminController
         }
 
         $pdf->Output('purchase_invoice.pdf', $type);
+    }
+
+    public function find_project_members() 
+    {
+        $response = array();
+        if ($this->input->post()) {
+            $data = $this->input->post();
+            if(!empty($data['project_id'])) {
+                $response = $this->staff_model->find_project_members($data['project_id']);
+            }
+        }
+        echo json_encode($response);
+    }
+
+    public function find_approval_setting()
+    {
+        $response['success'] = false;
+        if ($this->input->post()) {
+            $response = $this->purchase_model->find_approval_setting($this->input->post());
+        }
+        echo json_encode($response);
     }
 
 }
