@@ -94,6 +94,11 @@
                             </h5>
                             <?php } ?>
                          </div>
+                         <?php if($pur_request->status == 2) { ?>
+                            <br />
+                            <a href="<?php echo admin_url('purchase/pur_order?pr='.$pur_request->id); ?>" class="btn btn-info save_detail pull-right" target="_blank"><?php echo _l('convert_to_po'); ?></a>
+                         <?php } ?>
+
                     </div>
                   <div class=" col-md-12">
                     <hr class="hr_style" />
@@ -124,6 +129,10 @@
                        <tr class="project-overview">
                           <td class="bold"><?php echo _l('request_date'); ?></td>
                           <td><?php echo _dt($pur_request->request_date); ?></td>
+                       </tr>
+                       <tr class="project-overview">
+                          <td class="bold"><?php echo _l('project'); ?></td>
+                          <td><?php echo get_project_name_by_id($pur_request->project); ?></td>
                        </tr>
                        <tr>
                         <td class="bold"><?php echo _l('pdf'); ?></td>
@@ -176,7 +185,8 @@
                               <thead>
                                  <tr>
                                
-                                  <th width="25%" align="left"><?php echo _l('debit_note_table_item_heading'); ?></th>
+                                  <th width="20%" align="left"><?php echo _l('debit_note_table_item_heading'); ?></th>
+                                  <th width="15%" align="right" class="qty"><?php echo _l('decription'); ?></th>
                                   <th width="10%" align="right" class="qty"><?php echo _l('purchase_quantity'); ?></th>
                                   <th width="10%" align="right"><?php echo _l('unit_price'); ?></th>
                                   
@@ -210,6 +220,7 @@
                                     <?php
                                        $unit_name = pur_get_unit_name($es['unit_id']); 
                                     ?>
+                                    <td align="right"><?php echo nl2br($es['description']); ?></td>
                                     <td align="right"  width="12%"><?php echo pur_html_entity_decode($es['quantity']). ' '.$unit_name; ?></td>
                                     <td align="right"><?php echo app_format_money($es['unit_price'],$base_currency->symbol); ?></td>
                                     <td align="right"><?php echo app_format_money($es['into_money'],$base_currency->symbol); ?></td>

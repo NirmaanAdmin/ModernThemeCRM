@@ -586,7 +586,7 @@ class purchase extends AdminController
                         $item_text = pur_get_item_variatiom($request_detail['item_code']);
                     }
 
-                    $purchase_request_row_template .= $this->purchase_model->create_purchase_request_row_template('items[' . $index_request . ']', $request_detail['item_code'], $item_text, $request_detail['unit_price'], $request_detail['quantity'], $unit_name, $request_detail['unit_id'], $request_detail['into_money'], $request_detail['prd_id'], $request_detail['tax_value'], $request_detail['total'], $request_detail['tax_name'], $request_detail['tax_rate'], $request_detail['tax'], true, $currency_rate, $to_currency);
+                    $purchase_request_row_template .= $this->purchase_model->create_purchase_request_row_template('items[' . $index_request . ']', $request_detail['item_code'], $item_text, $request_detail['description'], $request_detail['unit_price'], $request_detail['quantity'], $unit_name, $request_detail['unit_id'], $request_detail['into_money'], $request_detail['prd_id'], $request_detail['tax_value'], $request_detail['total'], $request_detail['tax_name'], $request_detail['tax_rate'], $request_detail['tax'], true, $currency_rate, $to_currency);
                 }
             }
         }
@@ -599,7 +599,7 @@ class purchase extends AdminController
         $data['salse_estimates'] = $this->purchase_model->get_sale_estimate_for_pr();
         
         $data['taxes'] = $this->purchase_model->get_taxes();
-        $data['projects'] = $this->projects_model->get();
+        $data['projects'] = $this->projects_model->get_items();
         $data['staffs'] = $this->staff_model->get();
     	$data['departments'] = $this->departments_model->get();
     	$data['units'] = $this->purchase_model->get_units();
@@ -1589,6 +1589,17 @@ class purchase extends AdminController
         } else {
             $data['items']     = [];
             $data['ajaxItems'] = true;
+        }
+
+        $data['convert_po'] = false;
+        $pr = $this->input->get('pr', TRUE);
+        if(!empty($pr)) {
+            $purchase_request = $this->purchase_model->get_purchase_request($pr);
+            if(!empty($purchase_request)) {
+                $data['convert_po'] = true;
+                $data['selected_pr'] = $purchase_request->id;
+                $data['selected_project'] = $purchase_request->project;
+            }
         }
 
         $data['title'] = $title;
@@ -7361,6 +7372,7 @@ class purchase extends AdminController
     public function get_purchase_request_row_template(){
         $name = $this->input->post('name');
         $item_text = $this->input->post('item_text');
+        $item_description = $this->input->post('item_description');
         $unit_price = $this->input->post('unit_price');
         $quantity = $this->input->post('quantity');
         $unit_name = $this->input->post('unit_name');
@@ -7374,7 +7386,7 @@ class purchase extends AdminController
         $currency_rate = $this->input->post('currency_rate');
         $to_currency = $this->input->post('to_currency');
         
-        echo $this->purchase_model->create_purchase_request_row_template( $name, $item_code, $item_text, $unit_price, $quantity, $unit_name, $unit_id, $into_money, $item_key, $tax_value, $total, $tax_name, '', '', false, $currency_rate, $to_currency);
+        echo $this->purchase_model->create_purchase_request_row_template( $name, $item_code, $item_text, $item_description, $unit_price, $quantity, $unit_name, $unit_id, $into_money, $item_key, $tax_value, $total, $tax_name, '', '', false, $currency_rate, $to_currency);
     }
 
     /**

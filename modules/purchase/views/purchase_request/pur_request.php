@@ -77,7 +77,7 @@
 
                           <div class="col-md-3 ">
                            <?php
-                              $currency_attr = array();
+                              $currency_attr = array('disabled'=>true,'data-show-subtext'=>true);
 
                               $selected = (isset($pur_request) && $pur_request->currency != 0) ? $pur_request->currency : '';
                               if($selected == ''){
@@ -198,11 +198,12 @@
                           <thead>
                             <tr>
                               <th></th>
-                              <th width="25%" align="left"><i class="fa fa-exclamation-circle" aria-hidden="true" data-toggle="tooltip" data-title="<?php echo _l('item_description_new_lines_notice'); ?>"></i> <?php echo _l('debit_note_table_item_heading'); ?></th>
+                              <th width="15%" align="left"><i class="fa fa-exclamation-circle" aria-hidden="true" data-toggle="tooltip" data-title="<?php echo _l('item_description_new_lines_notice'); ?>"></i> <?php echo _l('debit_note_table_item_heading'); ?></th>
+                              <th width="15%" align="right"><?php echo _l('description'); ?></th>
                               <th width="10%" align="right"><?php echo _l('unit_price'); ?><span class="th_currency"><?php echo '('.$pur_request_currency->name.')'; ?></span></th>
                               <th width="10%" align="right" class="qty"><?php echo _l('purchase_quantity'); ?></th>
                               <th width="10%" align="right"><?php echo _l('subtotal'); ?><span class="th_currency"><?php echo '('.$pur_request_currency->name.')'; ?></span></th>
-                              <th width="15%" align="right"><?php echo _l('debit_note_table_tax_heading'); ?></th>
+                              <th width="10%" align="right"><?php echo _l('debit_note_table_tax_heading'); ?></th>
                               <th width="10%" align="right"><?php echo _l('tax_value'); ?><span class="th_currency"><?php echo '('.$pur_request_currency->name.')'; ?></span></th>
                               <th width="10%" align="right"><?php echo _l('debit_note_total'); ?><span class="th_currency"><?php echo '('.$pur_request_currency->name.')'; ?></span></th>
                               <th align="right"><i class="fa fa-cog"></i></th>

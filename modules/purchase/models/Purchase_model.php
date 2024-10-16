@@ -1143,6 +1143,7 @@ class Purchase_model extends App_Model
         $data['to_currency'] = $data['currency'];
 
         unset($data['item_text']);
+        unset($data['description']);
         unset($data['unit_price']);
         unset($data['quantity']);
         unset($data['into_money']);
@@ -1187,6 +1188,10 @@ class Purchase_model extends App_Model
       
         $this->db->insert(db_prefix().'pur_request',$data);
         $insert_id = $this->db->insert_id();
+        $this->send_mail_to_approver($data, 'pur_request', 'purchase_request', $insert_id);
+        if($data['status'] == 2) {
+            $this->send_mail_to_sender('purchase_request', $data['status'], $insert_id);
+        }
         if($insert_id){
 
             // Update next purchase order number in settings
@@ -1199,6 +1204,7 @@ class Purchase_model extends App_Model
                     $dt_data = [];
                     $dt_data['pur_request'] = $insert_id;
                     $dt_data['item_code'] = $rqd['item_code'];
+                    $dt_data['description'] = nl2br($rqd['item_description']);
                     $dt_data['unit_id'] = isset($rqd['unit_id']) ? $rqd['unit_id'] : null;
                     $dt_data['unit_price'] = $rqd['unit_price'];
                     $dt_data['into_money'] = $rqd['into_money'];
@@ -1287,6 +1293,7 @@ class Purchase_model extends App_Model
         }
 
         unset($data['item_text']);
+        unset($data['description']);
         unset($data['unit_price']);
         unset($data['quantity']);
         unset($data['into_money']);
@@ -1330,6 +1337,7 @@ class Purchase_model extends App_Model
                 $dt_data = [];
                 $dt_data['pur_request'] = $id;
                 $dt_data['item_code'] = $rqd['item_code'];
+                $dt_data['description'] = nl2br($rqd['item_description']);
                 $dt_data['unit_id'] = isset($rqd['unit_id']) ? $rqd['unit_id'] : null;
                 $dt_data['unit_price'] = $rqd['unit_price'];
                 $dt_data['into_money'] = $rqd['into_money'];
@@ -1383,6 +1391,7 @@ class Purchase_model extends App_Model
                 $dt_data = [];
                 $dt_data['pur_request'] = $id;
                 $dt_data['item_code'] = $rqd['item_code'];
+                $dt_data['description'] = nl2br($rqd['item_description']);
                 $dt_data['unit_id'] = isset($rqd['unit_id']) ? $rqd['unit_id'] : null;
                 $dt_data['unit_price'] = $rqd['unit_price'];
                 $dt_data['into_money'] = $rqd['into_money'];
@@ -3469,21 +3478,6 @@ class Purchase_model extends App_Model
         $this->load->model('departments_model');
 
         $pur_request = $this->get_purchase_request($pur_request_id);
-        $project = $this->projects_model->get($pur_request->project);
-        $project_name = '';
-        if($project && isset($project->name)){
-            $project_name = $project->name;
-        }
-
-        $tax_data = $this->get_html_tax_pur_request($pur_request_id);
-
-        if($pur_request->currency != 0){
-            $base_currency = pur_get_currency_by_id($pur_request->currency);
-        }else{
-            $base_currency = get_base_currency_pur();
-        }
-        
-
         $pur_request_detail = $this->get_pur_request_detail($pur_request_id);
         $company_name = get_option('invoice_company_name'); 
         $dpm_name = $this->departments_model->get($pur_request->department)->name;
@@ -3492,134 +3486,61 @@ class Purchase_model extends App_Model
         $month = date('m',strtotime($pur_request->request_date));
         $year = date('Y',strtotime($pur_request->request_date));
         $list_approve_status = $this->get_list_approval_details($pur_request_id,'pur_request');
+        $logo = '';
+        $company_logo = get_option('company_logo_dark');
+        if(!empty($company_logo)) {
+            $logo = '<img src="' . base_url('uploads/company/' . $company_logo) . '" width="230" height="100">';
+        }
 
     $html = '<table class="table">
         <tbody>
           <tr>
-            <td rowspan="3" style="width: 30%" class="text-left">'.get_po_logo(get_option('pdf_logo_width')).'</td>
-            <td align="right" class="font_td_cpn" style="width: 70%">'. _l('purchase_company_name').': '. $company_name.'</td>
-            
-          </tr>
-          <tr>
-            <td align="right" class="font_500">'. _l('address').': '. $address.'</td>
-          </tr>
-          <tr>
-            <td align="right" class="font_500">'.$pur_request->pur_rq_code.'</td>
-          </tr>
-        </tbody>
-      </table>
-      <table class="table">
-        <tbody>
-          <tr>
-            
-            <td class="td_ali_font"><h2 class="h2_style">'.mb_strtoupper(_l('purchase_request')).'</h2></td>
-           
-          </tr>
-          <tr>
-            
-            <td class="align_cen">'. _l('days').' '.$day.' '._l('month').' '.$month.' '._l('year') .' '.$year.'</td>
-            
-          </tr>
-          
-        </tbody>
-      </table>
-      <table class="table">
-        <tbody>
-          <tr>
-            <td class="td_width_25"><h4>'. _l('requester').':</h4></td>
-            <td class="td_width_75">'. get_staff_full_name($pur_request->requester).'</td>
-          </tr>
-          <tr>
-            <td class="font_500"><h4>'. _l('department').':</h4></td>
-            <td>'. $dpm_name.'</td>
-          </tr>
-          <tr>
-            <td class="font_500"><h4>'. _l('type').':</h4></td>
-            <td>'. _l($pur_request->type).'</td>
-          </tr>
-          <tr>
-            <td class="font_500"><h4>'. _l('project').':</h4></td>
-            <td>'.  $project_name.'</td>
+            <td>
+                '.$logo.'
+                '.format_organization_info().'
+            </td>
+            <td style="position: absolute; float: right;">
+                <span style="text-align: right; font-size: 25px"><b>'.mb_strtoupper(_l('request_quotation')).'</b></span><br />
+                <span style="text-align: right;">'.$pur_request->pur_rq_code.'</span><br />
+                <span style="text-align: right;">'.get_status_approve($pur_request->status).'</span><br /><br />
+                <span style="text-align: right;"><b>'. _l('date_request').':</b> '. date('d-m-Y', strtotime($pur_request->request_date)).'</span><br />
+                <span style="text-align: right;"><b>'. _l('project').':</b> '. get_project_name_by_id($pur_request->project).'</span><br />
+                <span style="text-align: right;"><b>'. _l('requester').':</b> '. get_staff_full_name($pur_request->requester).'</span><br />
+            </td>
           </tr>
         </tbody>
       </table>
       <br><br>
       ';
 
-      $html .=  '<table class="table pur_request-item">
-            <thead>
-              <tr class="border_tr">
-                <th align="left" class="width30 thead-dark">'._l('items').'</th>
-                <th align="right" class="width15 thead-dark">'._l('purchase_unit_price').'</th>
-                <th align="right" class="width15 thead-dark">'._l('purchase_quantity').'</th>
-                <th align="right" class="width15 thead-dark">'._l('into_money').'</th>';
-           
-                    $html .= '<th align="right" class="width10 thead-dark">'._l('tax_value').'</th>';
-                  
-                $html .= '<th align="right" class="width15 thead-dark">'._l('total').'</th>
-              </tr>
-            </thead>
-          <tbody>';
-
-      $tmn = 0;  
-      $_total = 0;  
+      $html .=  '<table class="table purorder-item">
+        <thead>
+          <tr>
+            <th class="thead-dark">'._l('items').'</th>
+            <th class="thead-dark">'._l('decription').'</th>
+            <th class="thead-dark" align="right">'._l('unit').'</th>
+            <th class="thead-dark" align="right">'._l('unit_price').'</th>
+            <th class="thead-dark" align="right">'._l('quantity').'</th>
+            <th class="thead-dark" align="right">'._l('into_money').'</th>
+            <th class="thead-dark" align="right">'._l('inventory_quantity').'</th>
+          </tr>
+        </thead>
+        <tbody>';
       foreach($pur_request_detail as $row){
         $items = $this->get_items_by_id($row['item_code']);
         $units = $this->get_units_by_id($row['unit_id']);
-        if($items){
-            $unit_name = isset($units->unit_name) ? $units->unit_name : '';
-
-            $html .= '<tr class="border_tr">
-                <td class="width30" align="left">'.$items->commodity_code.' - '.$items->description.'</td>
-
-                <td class="width15" align="right">'.app_format_money($row['unit_price'],$base_currency->symbol).'</td>
-                <td class="width15" align="right">'.app_format_number($row['quantity'],'').' '.$unit_name.'</td>
-                <td class="width15" align="right">'.app_format_money($row['into_money'],$base_currency->symbol).'</td>';
-          
-                    $html .= '<td class="width10" align="right">'.app_format_money($row['tax_value'],$base_currency->symbol).'</td>';
-                
-                $html .= '<td class="width15" align="right">'.app_format_money($row['total'],$base_currency->symbol).'</td>
-              </tr>';
-        }else{
-            $unit_name = isset($units->unit_name) ? $units->unit_name : '';
-            $html .= '<tr class="border_tr">
-                <td class="width30" align="left">'.$row['item_text'].'</td>
-
-                <td class="width15" align="right">'.app_format_money($row['unit_price'],$base_currency->symbol).'</td>
-                <td class="width15" align="right">'.$row['quantity'].'</td>
-                <td class="width15" align="right">'.app_format_money($row['into_money'],$base_currency->symbol).'</td>';
-              
-                    $html .= '<td class="width10" align="right">'.app_format_money($row['tax_value'],$base_currency->symbol).'</td>';
-                
-                $html .= '<td class="width15" align="right">'.app_format_money($row['total'],$base_currency->symbol).'</td>
-              </tr>';
-        }
-
-        $tmn += $row['into_money'];
-        $_total += $row['total'];
+        $html .= '<tr nobr="true" class="sortable">
+            <td>'.$items->commodity_code.' - '.$items->description.'</td>
+            <td>'.$row['description'].'</td>
+            <td align="right">'.$units->unit_name.'</td>
+            <td align="right">'.app_format_money($row['unit_price'],'').'</td>
+            <td align="right">'.$row['quantity'].'</td>
+            <td align="right">'.app_format_money($row['into_money'],'').'</td>
+            <td align="right">'.$row['inventory_quantity'].'</td>
+          </tr>';
       }  
       $html .=  '</tbody>
-      </table><br><br>';
-
-      $html .= '<table class="table text-right"><tbody>';
-      $html .= '<tr>
-                 <td style="width: 33%"></td>
-                 <td>'. _l('subtotal').'</td>
-                 <td class="subtotal">
-                    '. app_format_money($tmn, $base_currency->symbol).'
-                 </td>
-              </tr>';
-
-      $html .= $tax_data['pdf_html'];
-      $html .= '<tr>
-                 <td style="width: 33%"></td>
-                 <td>'. _l('total').'</td>
-                 <td class="subtotal">
-                    '. app_format_money($_total, $base_currency->symbol).'
-                 </td>
-              </tr>';
-
-      $html .= ' </tbody></table>';
+      </table>';
 
       $html .= '<br>
       <br>
@@ -3635,15 +3556,15 @@ class Purchase_model extends App_Model
         if($value['action'] == 'sign'){
             $html .= '<h3>'.mb_strtoupper(get_staff_full_name($value['staffid'])).'</h3>';
             if($value['approve'] == 2){ 
-                $html .= '<img src="'.FCPATH.'modules/purchase/uploads/pur_request/signature/'.$pur_request->id.'/signature_'.$value['id'].'.png" class="img_style">';
+                $html .= '<img src="'.site_url('modules/purchase/uploads/pur_request/signature/'.$pur_request->id.'/signature_'.$value['id'].'.png').'" class="img_style">';
             }
                 
         }else{ 
         $html .= '<h3>'.mb_strtoupper(get_staff_full_name($value['staffid'])).'</h3>';
               if($value['approve'] == 2){ 
-        $html .= '<img src="'.FCPATH .'modules/purchase/uploads/approval/approved.png" class="img_style">';
+        $html .= '<img src="'.site_url('modules/purchase/uploads/approval/approved.png').'" class="img_style">';
              }elseif($value['approve'] == 3){
-        $html .= '<img src="'.FCPATH.'modules/purchase/uploads/approval/rejected.png" class="img_style">';
+        $html .= '<img src="'.site_url('modules/purchase/uploads/approval/rejected.png').'" class="img_style">';
              }
               
                 }
@@ -3653,11 +3574,11 @@ class Purchase_model extends App_Model
     
     
      } 
-            $html .= '<td class="td_ali_font"><h3>'.mb_strtoupper(_l('purchase_requestor')).'</h3></td>
-            <td class="td_ali_font"><h3>'.mb_strtoupper(_l('purchase_treasurer')).'</h3></td></tr>
+            $html .= '<td class="td_ali_font"><h3>'.mb_strtoupper('Requestor').'</h3></td>
+            <td class="td_ali_font"><h3>'.mb_strtoupper('Treasurer').'</h3></td></tr>
         </tbody>
       </table>';
-      $html .=  '<link href="' . FCPATH.'modules/purchase/assets/css/pur_order_pdf.css' . '"  rel="stylesheet" type="text/css" />';
+      $html .= '<link href="' . module_dir_url(PURCHASE_MODULE_NAME, 'assets/css/pur_order_pdf.css') . '"  rel="stylesheet" type="text/css" />';
       return $html;
     }
 
@@ -3684,18 +3605,6 @@ class Purchase_model extends App_Model
         $this->load->model('departments_model');
 
         $pur_request = $this->get_purchase_request($pur_request_id);
-        $project = $this->projects_model->get($pur_request->project);
-        $project_name = '';
-        if($project && isset($project->name)){
-            $project_name = $project->name;
-        }
-
-        $tax_data = $this->get_html_tax_pur_request($pur_request_id);
-        if($pur_request->currency != 0){
-            $base_currency = pur_get_currency_by_id($pur_request->currency);
-        }else{
-            $base_currency = get_base_currency_pur();
-        }
         $pur_request_detail = $this->get_pur_request_detail($pur_request_id);
         $company_name = get_option('invoice_company_name'); 
         $dpm_name = $this->departments_model->get($pur_request->department)->name;
@@ -3704,133 +3613,60 @@ class Purchase_model extends App_Model
         $month = date('m',strtotime($pur_request->request_date));
         $year = date('Y',strtotime($pur_request->request_date));
         $list_approve_status = $this->get_list_approval_details($pur_request_id,'pur_request');
+        $logo = '';
+        $company_logo = get_option('company_logo_dark');
+        if(!empty($company_logo)) {
+            $logo = '<img src="' . base_url('uploads/company/' . $company_logo) . '" width="230" height="100">';
+        }
 
     $html = '<table class="table">
         <tbody>
           <tr>
-            <td rowspan="3" style="width: 30%" class="text-left">'.get_po_logo(get_option('pdf_logo_width')).'</td>
-            <td align="right" class="font_td_cpn" style="width: 70%">'. _l('purchase_company_name').': '. $company_name.'</td>
-            
-          </tr>
-          <tr>
-            <td align="right" class="font_500">'. _l('address').': '. $address.'</td>
-          </tr>
-          <tr>
-            <td align="right" class="font_500">'.$pur_request->pur_rq_code.'</td>
-          </tr>
-        </tbody>
-      </table>
-      <table class="table">
-        <tbody>
-          <tr>
-            
-            <td class="td_ali_font"><h2 class="h2_style">'.mb_strtoupper(_l('purchase_request')).'</h2></td>
-           
-          </tr>
-          <tr>
-            
-            <td class="align_cen">'. _l('days').' '.$day.' '._l('month').' '.$month.' '._l('year') .' '.$year.'</td>
-            
-          </tr>
-          
-        </tbody>
-      </table>
-      <table class="table">
-        <tbody>
-          <tr>
-            <td class="td_width_25"><h4>'. _l('requester').':</h4></td>
-            <td class="td_width_75">'. get_staff_full_name($pur_request->requester).'</td>
-          </tr>
-          <tr>
-            <td class="font_500"><h4>'. _l('department').':</h4></td>
-            <td>'. $dpm_name.'</td>
-          </tr>
-          <tr>
-            <td class="font_500"><h4>'. _l('type').':</h4></td>
-            <td>'. _l($pur_request->type).'</td>
-          </tr>
-          <tr>
-            <td class="font_500"><h4>'. _l('project').':</h4></td>
-            <td>'.  $project_name.'</td>
+            <td>
+                '.$logo.'
+                '.format_organization_info().'
+            </td>
+            <td style="position: absolute; float: right;">
+                <span style="text-align: right; font-size: 25px"><b>'.mb_strtoupper(_l('request_quotation')).'</b></span><br />
+                <span style="text-align: right;">'.$pur_request->pur_rq_code.'</span><br />
+                <span style="text-align: right;">'.get_status_approve($pur_request->status).'</span><br /><br />
+                <span style="text-align: right;"><b>'. _l('date_request').':</b> '. date('d-m-Y', strtotime($pur_request->request_date)).'</span><br />
+                <span style="text-align: right;"><b>'. _l('project').':</b> '. get_project_name_by_id($pur_request->project).'</span><br />
+                <span style="text-align: right;"><b>'. _l('requester').':</b> '. get_staff_full_name($pur_request->requester).'</span><br />
+            </td>
           </tr>
         </tbody>
       </table>
       <br><br>
       ';
 
-      $html .=  '<table class="table pur_request-item">
-            <thead>
-              <tr class="border_tr">
-                <th align="left" class="thead-dark width30">'._l('items').'</th>
-                <th align="right" class="thead-dark width15">'._l('purchase_unit_price').'</th>
-                <th align="right" class="thead-dark width15">'._l('purchase_quantity').'</th>
-                <th align="right" class="thead-dark width15">'._l('into_money').'</th>';
-              
-                    $html .= '<th align="right" class="thead-dark width10">'._l('tax_value').'</th>';
-                
-                $html .= '<th align="right" class="thead-dark width15">'._l('total').'</th>
-              </tr>
-            </thead>
-          <tbody>';
-
-      $tmn = 0;    
-      $_total = 0;
+      $html .=  '<table class="table purorder-item">
+        <thead>
+          <tr>
+            <th class="thead-dark">'._l('items').'</th>
+            <th class="thead-dark">'._l('decription').'</th>
+            <th class="thead-dark" align="right">'._l('unit').'</th>
+            <th class="thead-dark" align="right">'._l('unit_price').'</th>
+            <th class="thead-dark" align="right">'._l('quantity').'</th>
+            <th class="thead-dark" align="right">'._l('into_money').'</th>
+          </tr>
+        </thead>
+        <tbody>';
       foreach($pur_request_detail as $row){
         $items = $this->get_items_by_id($row['item_code']);
         $units = $this->get_units_by_id($row['unit_id']);
-        if($items){
-
-            $unit_name = isset($units->unit_name) ? $units->unit_name : '';
-            $html .= '<tr class="border_tr">
-                <td class="width30" align="left">'.$items->commodity_code.' - '.$items->description.'</td>
-                <td class="width15" align="right">'.app_format_money($row['unit_price'],$base_currency->symbol).'</td>
-                <td class="width15" align="right">'.app_format_number($row['quantity'],'').' '.$unit_name.'</td>
-                <td class="width15" align="right">'.app_format_money($row['into_money'],$base_currency->symbol).'</td>';
-                
-                    $html .= '<td class="width10" align="right">'.app_format_money($row['tax_value'],$base_currency->symbol).'</td>';
-                
-                $html .= '<td class="width15" align="right">'.app_format_money($row['total'],$base_currency->symbol).'</td>
-              </tr>';
-        }else{
-            $unit_name = isset($units->unit_name) ? $units->unit_name : '';
-            $html .= '<tr class="border_tr">
-                <td class="width30" align="left">'.$row['item_text'].'</td>
-                <td class="width15" align="right">'.app_format_money($row['unit_price'],$base_currency->symbol).'</td>
-                <td class="width15" align="right">'.$row['quantity'].'</td>
-                <td class="width15" align="right">'.app_format_money($row['into_money'],$base_currency->symbol).'</td>';
-              
-                    $html .= '<td class="width10" align="right">'.app_format_money($row['tax_value'],$base_currency->symbol).'</td>';
-                
-                $html .= '<td class="width15" align="right">'.app_format_money($row['total'],$base_currency->symbol).'</td>
-              </tr>';
-        }
-          $tmn += $row['into_money'];
-          $_total += $row['total'];
+        $html .= '<tr nobr="true" class="sortable">
+            <td>'.$items->commodity_code.' - '.$items->description.'</td>
+            <td>'.$row['description'].'</td>
+            <td align="right">'.$units->unit_name.'</td>
+            <td align="right">'.app_format_money($row['unit_price'],'').'</td>
+            <td align="right">'.$row['quantity'].'</td>
+            <td align="right">'.app_format_money($row['into_money'],'').'</td>
+          </tr>';
       }  
       $html .=  '</tbody>
-      </table><br><br>';
-
-      $html .= '<table class="table text-right"><tbody>';
-      $html .= '<tr>
-                 <td style="width: 33%"></td>
-                 <td>'. _l('subtotal').'</td>
-                 <td class="subtotal">
-                    '. app_format_money($tmn, $base_currency->symbol).'
-                 </td>
-              </tr>';
-
-      $html .= $tax_data['pdf_html'];
-      $html .= '<tr>
-                 <td style="width: 33%"></td>
-                 <td>'. _l('total').'</td>
-                 <td class="subtotal">
-                    '. app_format_money($_total, $base_currency->symbol).'
-                 </td>
-              </tr>';
-
-      $html .= ' </tbody></table>';
-
-      $html .=  '<link href="' . FCPATH.'modules/purchase/assets/css/pur_order_pdf.css' . '"  rel="stylesheet" type="text/css" />';
+      </table>';
+      $html .= '<link href="' . module_dir_url(PURCHASE_MODULE_NAME, 'assets/css/pur_order_pdf.css') . '"  rel="stylesheet" type="text/css" />';
       return $html;
     }
 
@@ -10063,12 +9899,13 @@ class Purchase_model extends App_Model
      * @param      array   $unit_data  The unit data
      * @param      string  $name       The name
      */
-    public function create_purchase_request_row_template($name = '', $item_code = '', $item_text = '', $unit_price = '', $quantity = '', $unit_name = '', $unit_id = '', $into_money = '', $item_key = '', $tax_value = '', $total = '', $tax_name = '', $tax_rate = '', $tax_id = '', $is_edit = false, $currency_rate = 1, $to_currency = ''){
+    public function create_purchase_request_row_template($name = '', $item_code = '', $item_text = '', $item_description = '', $unit_price = '', $quantity = '', $unit_name = '', $unit_id = '', $into_money = '', $item_key = '', $tax_value = '', $total = '', $tax_name = '', $tax_rate = '', $tax_id = '', $is_edit = false, $currency_rate = 1, $to_currency = ''){
         $this->load->model('invoice_items_model');
         $row = '';
 
         $name_item_code = 'item_code';
         $name_item_text = 'item_text';
+        $name_item_description = 'description';
         $name_unit_id = 'unit_id';
         $name_unit_name = 'unit_name';
         $name_unit_price = 'unit_price';
@@ -10103,6 +9940,7 @@ class Purchase_model extends App_Model
                     <td class="dragger"><input type="hidden" class="order" name="' . $name . '[order]"><input type="hidden" class="ids" name="' . $name . '[id]" value="' . $item_key . '"></td>';
             $name_item_code = $name . '[item_code]';
             $name_item_text = $name . '[item_text]';
+            $name_item_description = $name . '[item_description]';
             $name_unit_id = $name . '[unit_id]';
             $name_unit_name = $name . '[unit_name]';
             $name_unit_price = $name . '[unit_price]';
@@ -10150,6 +9988,7 @@ class Purchase_model extends App_Model
 
 
         $row .= '<td class="">' . render_textarea($name_item_text, '', $item_text, ['rows' => 2, 'placeholder' => _l('pur_item_name')] ) . '</td>';
+        $row .= '<td class="">' . render_textarea($name_item_description, '', $item_description, ['rows' => 2, 'placeholder' => _l('item_description')] ) . '</td>';
         $row .= '<td class="rate">' . render_input($name_unit_price, '', $unit_price, 'number', $array_rate_attr, [], 'no-margin', $text_right_class) ;
         if( $unit_price != ''){
             $original_price = round( ($unit_price/$currency_rate), 2);
@@ -14008,5 +13847,134 @@ class Purchase_model extends App_Model
             $check_status = true;
         }
         return $check_status;
+    }
+
+    public function send_mail_to_approver($fdata, $related, $type, $id)
+    {
+        $approver_list = $this->check_approval_setting($fdata['project'], $related, 1);
+        $this->db->select('staffid as id, "approve" as action', FALSE);
+        $this->db->where('admin', 1);
+        $this->db->or_where('staffid', $fdata['requester']);
+        $this->db->order_by('staffid','desc');
+        $staffs = $this->db->get('tblstaff')->result_array();
+        $approver_list = array_merge($approver_list, $staffs);
+        $approver_list = array_unique($approver_list, SORT_REGULAR);
+        $approver_list = array_values($approver_list);
+
+        if(!empty($approver_list)) {
+            $approver_list = array_column($approver_list, 'id');
+            $this->db->select('staffid as id, email, firstname, lastname');
+            $this->db->where_in('staffid', $approver_list);
+            $approver_list = $this->db->get('tblstaff')->result_array();
+
+            $this->db->where('staffid', get_staff_user_id());
+            $login_staff = $this->db->get('tblstaff')->row();
+            
+            foreach ($approver_list as $key => $value) {
+                $data = array();
+                $data['contact_firstname'] = $login_staff->firstname;
+                $data['contact_lastname'] = $login_staff->lastname;
+
+                if($type == 'purchase_request') {
+                    $data['mail_to'] = $value['email'];
+                    $data['pur_request_id'] = $id;
+                    $data = (object) $data;
+                    mail_template('purchase_request_to_approver','purchase',$data);
+                }
+
+                if($type == 'purchase_order') {
+                    $data['mail_to'] = $value['email'];
+                    $data['po_id'] = $id;
+                    $data = (object) $data;
+                    mail_template('purchase_order_to_approver','purchase',$data);
+                }
+
+                if($type == 'quotation') {
+                    $data['mail_to'] = $value['email'];
+                    $data['pur_estimate_id'] = $id;
+                    $data = (object) $data;
+                    mail_template('purchase_quotation_to_approver','purchase',$data);
+                }
+            }
+        }
+    }
+
+    public function send_mail_to_sender($type, $status, $id)
+    {
+        $requester = 0;
+        $vendor_id = 0;
+        $vendor_name = '';
+        if($type == 'purchase_request') {
+            $this->db->where('id', $id);
+            $row = $this->db->get(db_prefix() . 'pur_request')->row();
+            $requester = $row->requester;
+        }
+
+        if($type == 'purchase_order') {
+            $this->db->where('id', $id);
+            $row = $this->db->get(db_prefix() . 'pur_orders')->row();
+            $requester = $row->addedfrom;
+            $vendor_id = $row->vendor;
+            if($vendor_id != 0) {
+                $this->db->where('userid', $vendor_id);
+                $vendor_detail = $this->db->get(db_prefix() . 'pur_vendor')->row();
+                $vendor_name = $vendor_detail->company;
+            }
+        }
+
+        if($type == 'quotation') {
+            $this->db->where('id', $id);
+            $row = $this->db->get(db_prefix() . 'pur_estimates')->row();
+            $requester = $row->addedfrom;
+        }
+
+        $this->db->select('email, firstname, lastname');
+        $this->db->where('admin', 1);
+        $this->db->or_where('staffid', $requester);
+        $this->db->or_where('staffid', get_staff_user_id());
+        $staffs = $this->db->get('tblstaff')->result_array();
+
+        if($type == 'purchase_order') {
+            $this->db->select('email, firstname, lastname');
+            $this->db->where('userid', $vendor_id);
+            $this->db->where('is_primary', 1);
+            $vendors = $this->db->get(db_prefix() . 'pur_contacts')->result_array();
+            $staffs = array_merge($staffs, $vendors);
+            $staffs = array_values($staffs);
+        }
+
+        if(!empty($staffs)) {
+
+            $this->db->where('staffid', get_staff_user_id());
+            $login_staff = $this->db->get('tblstaff')->row();
+
+            foreach ($staffs as $key => $value) {
+                $data = array();
+                $data['contact_firstname'] = $login_staff->firstname;
+                $data['contact_lastname'] = $login_staff->lastname;
+
+                if($type == 'purchase_request') {
+                    $data['mail_to'] = $value['email'];
+                    $data['pur_request_id'] = $id;
+                    $data = (object) $data;
+                    mail_template('purchase_request_to_sender','purchase',$data);
+                }
+
+                if($type == 'purchase_order') {
+                    $data['mail_to'] = $value['email'];
+                    $data['po_id'] = $id;
+                    $data['vendor_name'] = $vendor_name;
+                    $data = (object) $data;
+                    mail_template('purchase_order_to_sender','purchase',$data);
+                }
+
+                if($type == 'quotation') {
+                    $data['mail_to'] = $value['email'];
+                    $data['pur_estimate_id'] = $id;
+                    $data = (object) $data;
+                    mail_template('purchase_quotation_to_sender','purchase',$data);
+                }
+            }
+        }
     }
 }

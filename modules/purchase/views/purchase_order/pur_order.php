@@ -83,6 +83,13 @@
                           
                         </div>
 
+                        <?php 
+                          if($convert_po && $selected_pr && $selected_project) {
+                            $pur_order['pur_request'] = $selected_pr;
+                            $pur_order['project'] = $selected_project;
+                            $pur_order = (object) $pur_order;
+                          }
+                        ?>
                         <div class="col-md-6 form-group">
                         <label for="pur_request"><?php echo _l('pur_request'); ?></label>
                         <select name="pur_request" id="pur_request" class="selectpicker" onchange="coppy_pur_request(); return false;"  data-live-search="true" data-width="100%" data-none-selected-text="<?php echo _l('ticket_settings_none_assigned'); ?>" >
@@ -505,5 +512,45 @@
 <?php init_tail(); ?>
 </body>
 </html>
+
+<script type="text/javascript">
+  var convert_po = '<?php echo $convert_po; ?>';
+  if(convert_po) {
+    $('#project').attr('disabled', true);
+    $('#pur_request').attr('disabled', true);
+  } else {
+    $('#project').attr('disabled', false);
+    $('#pur_request').attr('disabled', false);
+  }
+
+  var pur_request = $('select[name="pur_request"]').val();
+  var vendor = $('select[name="vendor"]').val();
+  if(pur_request != ''){
+    $.post(admin_url + 'purchase/coppy_pur_request_for_po/'+pur_request+'/'+vendor).done(function(response){
+        response = JSON.parse(response);
+        if(response){ 
+          $('select[name="estimate"]').html(response.estimate_html);
+          $('select[name="estimate"]').selectpicker('refresh');
+
+          $('select[name="currency"]').val(response.currency).change();
+          $('input[name="currency_rate"]').val(response.currency_rate).change();
+
+          $('.invoice-item table.invoice-items-table.items tbody').html('');
+          $('.invoice-item table.invoice-items-table.items tbody').append(response.list_item);
+
+          setTimeout(function () {
+            pur_calculate_total();
+          }, 15);
+
+          init_selectpicker();
+          pur_reorder_items('.invoice-item');
+          pur_clear_item_preview_values('.invoice-item');
+          $('body').find('#items-warning').remove();
+          $("body").find('.dt-loader').remove();
+          $('#item_select').selectpicker('val', '');
+        }   
+    });
+  }
+</script>
 
 <?php require 'modules/purchase/assets/js/pur_order_js.php';?>
