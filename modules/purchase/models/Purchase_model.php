@@ -1192,6 +1192,7 @@ class Purchase_model extends App_Model
         if($data['status'] == 2) {
             $this->send_mail_to_sender('purchase_request', $data['status'], $insert_id);
         }
+        $this->save_purchase_files('pur_request', $insert_id);
         if($insert_id){
 
             // Update next purchase order number in settings
@@ -1328,6 +1329,7 @@ class Purchase_model extends App_Model
         
         $this->db->where('id',$id);
         $this->db->update(db_prefix().'pur_request',$data);
+        $this->save_purchase_files('pur_request', $id);
         if($this->db->affected_rows() > 0){
             $affectedRows++;
         }
@@ -1511,6 +1513,9 @@ class Purchase_model extends App_Model
         $this->db->where('id',$id);
         $this->db->update(db_prefix().'pur_request',['status' => $status]);
         if($this->db->affected_rows() > 0){
+            if($status == 2 || $status == 3) {
+                $this->send_mail_to_sender('purchase_request', $status, $id);
+            }
             return true;
         }
         return false;
@@ -2158,6 +2163,9 @@ class Purchase_model extends App_Model
         if($this->db->affected_rows() > 0){
 
             hooks()->do_action('after_purchase_order_approve', $id);
+            if($status == 2 || $status == 3) {
+                $this->send_mail_to_sender('purchase_order', $status, $id);
+            }
 
             // hooks()->apply_filters('create_goods_receipt',['status' => $status,'id' => $id]);
             return true;
@@ -2316,6 +2324,11 @@ class Purchase_model extends App_Model
 
         $this->db->insert(db_prefix() . 'pur_orders', $data);
         $insert_id = $this->db->insert_id();
+        $this->send_mail_to_approver($data, 'pur_order', 'purchase_order', $insert_id);
+        if($data['approve_status'] == 2) {
+            $this->send_mail_to_sender('purchase_order', $data['approve_status'], $insert_id);
+        }
+        $this->save_purchase_files('pur_order', $insert_id);
         if ($insert_id) {
             // Update next purchase order number in settings
             $next_number = $data['number']+1;
@@ -2504,6 +2517,7 @@ class Purchase_model extends App_Model
 
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'pur_orders', $data);
+        $this->save_purchase_files('pur_order', $id);
 
         if ($this->db->affected_rows() > 0) {
             $affectedRows++;
@@ -4245,234 +4259,169 @@ class Purchase_model extends App_Model
 
         $pur_order = $this->get_pur_order($pur_order_id);
         $pur_order_detail = $this->get_pur_order_detail($pur_order_id);
-        $list_approve_status = $this->get_list_approval_details($pur_order_id,'pur_order');
-
         $company_name = get_option('invoice_company_name'); 
-        $vendor = $this->get_vendor($pur_order->vendor);
-        $tax_data = $this->get_html_tax_pur_order($pur_order_id);
-        $base_currency = get_base_currency_pur();
-        if($pur_order->currency != 0){
-            $base_currency = pur_get_currency_by_id($pur_order->currency);
+        
+        $address = get_option('invoice_company_address'); 
+        $day = date('d',strtotime($pur_order->order_date));
+        $month = date('m',strtotime($pur_order->order_date));
+        $year = date('Y',strtotime($pur_order->order_date));
+        $logo = '';
+        $delivery_date = '';
+        $project_detail = '';
+        $buyer = '';
+        $delivery_person = '';
+        $ship_to = format_po_ship_to_info($pur_order);
+        $company_logo = get_option('company_logo_dark');
+        if(!empty($company_logo)) {
+            $logo = '<img src="' . base_url('uploads/company/' . $company_logo) . '" width="230" height="100">';
         }
-
-        $address = '';
-        $vendor_name = '';
-
-        $ship_to = $pur_order->shipping_address . ' '.  $pur_order->shipping_city.' '.$pur_order->shipping_state.' '.$pur_order->shipping_zip.' '.$pur_order->shipping_country_text.' '.get_country_name($pur_order->shipping_country) ;
-        if($ship_to == ''){
-
-            $ship_to = get_option('pur_company_address') . ' '.  get_option('pur_company_city').' '.get_option('pur_company_state').' '.get_option('pur_company_zipcode').' '.get_option('pur_company_country_text').' '.get_country_name(get_option('pur_company_country_code'));
-            
-            if($ship_to == ''){
-                $ship_to = get_option('invoice_company_address') . ' '.  get_option('invoice_company_city').' '.get_option('company_state').' '.get_option('invoice_company_country_code') ;
-            }
+        if(!empty($pur_order->delivery_date)) {
+            $delivery_date = '<span style="text-align: right;"><b>'. _l('delivery_date').':</b> '. date('d-m-Y', strtotime($pur_order->delivery_date)).'</span><br />';
         }
-
-        if($vendor){
-            $countryName = '';
-            if($country = get_country($vendor->country) ){
-                $countryName = $country->short_name;
-            }
-
-
-
-            $address = $vendor->address.'<br>'. $vendor->city.'<br>'.$vendor->state. $vendor->zip.$countryName;
-            $vendor_name = $vendor->company;
-
-            $ship_country_name = '';
-            if($ship_country = get_country($vendor->shipping_country)){
-                $ship_country_name = $ship_country->short_name;
-            }
-            
+        if(!empty(get_project_name_by_id($pur_order->project))) {
+            $project_detail = '<br /><span><b>'. _l('project').':</b> '. get_project_name_by_id($pur_order->project).'<br />'.format_project_client_info($pur_order->project).'</span><br />';
         }
-
-        $day = _d($pur_order->order_date);
-       
-    $html = '';     
-    $html .= '<table class="table">
+        if(!empty($pur_order->buyer)) {
+            $buyer = '<span style="text-align: right;"><b>'. _l('buyer').':</b> '. get_staff_full_name($pur_order->buyer).'</span><br />';
+        }
+        if(!empty($pur_order->delivery_person)) {
+            $delivery_person = '<span style="text-align: right;"><b>'. _l('delivery_person').':</b> '. get_staff_full_name($pur_order->delivery_person).'</span><br />';
+        }
+        $pur_request = $this->get_purchase_request($pur_order->pur_request);
+        $pur_request_name = '';
+        if(!empty($pur_request)) {
+            $pur_request_name = '<span style="text-align: right;"><b>'. _l('pur_request').':</b> #'. $pur_request->pur_rq_code.'</span><br />';
+        }
+        $ship_to_detail = '';
+        if(!empty($ship_to)) {
+            $ship_to_detail = '<span style="text-align: right;">'.$ship_to.'</span><br /><br />';
+        }
+        
+    $html = '<table class="table">
         <tbody>
           <tr>
-            <td rowspan="6" class="text-left" style="width: 70%">
-            '.get_po_logo(get_option('pdf_logo_width'), "img img-responsive").'
-             <br>'.format_organization_info().'
+            <td>
+                '.$logo.'
+                '.format_organization_info().'
             </td>
-            <td class="text-right" style="width: 30%">
-                <strong class="fsize20">'.mb_strtoupper(_l('purchase_order')).'</strong><br>
-                <strong>'.mb_strtoupper($pur_order->pur_order_number).'</strong><br>
+            <td style="position: absolute; float: right;">
+                <span style="text-align: right; font-size: 25px"><b>'.mb_strtoupper(_l('purchase_order')).'</b></span><br />
+                <span style="text-align: right;">'.$pur_order->pur_order_number.' - '.$pur_order->pur_order_name.'</span><br /><br />
+                <span style="text-align: right;">'.format_pdf_vendor_info($pur_order->vendor).'</span><br />
             </td>
-          </tr>
-
-          <tr>
-            <td class="text-right" style="width: 30%">
-                <br><strong>'._l('pur_vendor').'</strong>    
-                <br>'. $vendor_name.'
-                <br>'. strip_tags($address).'
-            </td>
-            <td></td>
-          </tr>
-
-          <tr>
-            <td></td>
-          </tr>
-          <tr>
-            <td class="text-right" style="width: 30%">
-                <br><strong>'._l('pur_ship_to').'</strong>    
-                <br>'. strip_tags($ship_to).'
-                </td>
-            <td></td>
-          </tr>
-
-          <tr>
-            <td></td>
-          </tr>
-          <tr>
-            <td class="text-right">'. _l('order_date').': '. $day.'</td>
-            <td></td>
           </tr>
         </tbody>
-
       </table>
-      <br><br><br>
+
+      <table class="table">
+        <tbody>
+          <tr>
+            <td>
+                '.$project_detail.'
+            </td>
+            <td style="position: absolute; float: right;">
+                '.$ship_to_detail.'
+                '.$delivery_date.'
+                '.$delivery_person.'
+                '.$pur_request_name.'
+                <span style="text-align: right;"><b>'. _l('add_from').':</b> '. get_staff_full_name($pur_order->addedfrom).'</span><br />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <br><br>
       ';
 
       $html .=  '<table class="table purorder-item">
         <thead>
           <tr>
-            <th class="thead-dark" style="width: 30%;">'._l('items').'</th>
-            <th class="thead-dark" style="width: 15%;" align="right">'._l('purchase_unit_price').'</th>
-            <th class="thead-dark" style="width: 15%;" align="right">'._l('purchase_quantity').'</th>';
+            <th class="thead-dark">'._l('items').'</th>
+            <th class="thead-dark" align="right">'._l('item_description').'</th>
+            <th class="thead-dark" align="right">'._l('unit_price').'</th>
+            <th class="thead-dark" align="right">'._l('quantity').'</th>
          
-            if(get_option('show_purchase_tax_column') == 1){ 
-
-                $html .= '<th class="thead-dark" align="right" style="width: 10%;">'._l('tax').'</th>';
-            }
+            <th class="thead-dark" align="right">'._l('tax').'</th>
  
-            $html .= '<th class="thead-dark" align="right" style="width: 15%;">'._l('discount').'</th>
-            <th class="thead-dark" align="right" style="width: 15%;">'._l('total').'</th>
+            <th class="thead-dark" align="right">'._l('discount').'</th>
+            <th class="thead-dark" align="right">'._l('total').'</th>
           </tr>
           </thead>
           <tbody>';
         $t_mn = 0;
-        $item_discount = 0;
       foreach($pur_order_detail as $row){
         $items = $this->get_items_by_id($row['item_code']);
-        $des_html = ($items) ? $items->commodity_code.' - '.$items->description : $row['item_name'];
-
         $units = $this->get_units_by_id($row['unit_id']);
-        $unit_name = isset($units->unit_name) ? $units->unit_name : '';
-        
         $html .= '<tr nobr="true" class="sortable">
-            <td style="width: 30%;"><strong>'.$des_html.'</strong><br><span>'.$row['description'].'</span></td>
-            <td style="width: 15%;"align="right">'.app_format_money($row['unit_price'],$base_currency->symbol).'</td>
-            <td style="width: 15%;" align="right">'.app_format_number($row['quantity'],'').' '. $unit_name.'</td>';
+            <td >'.$items->commodity_code.' - '.$items->description.'</td>
+            <td align="left">'.$row['description'].'</td>
+            <td align="right">'.app_format_money($row['unit_price'],'').'</td>
+            <td align="right">'.$row['quantity'].'</td>
          
-            if(get_option('show_purchase_tax_column') == 1){  
-                $html .= '<td align="right" style="width: 10%;">'.app_format_money($row['total'] - $row['into_money'],$base_currency->symbol).'</td>';
-            }
+            <td align="right">'.app_format_money($row['total'] - $row['into_money'],'').'</td>
        
-            $html .= '<td align="right" style="width: 15%;">'.app_format_money($row['discount_money'],$base_currency->symbol).'</td>
-            <td align="right" style="width: 15%;">'.app_format_money($row['total_money'],$base_currency->symbol).'</td>
+            <td align="right">'.app_format_money($row['discount_money'],'').'</td>
+            <td align="right">'.app_format_money($row['total_money'],'').'</td>
           </tr>';
 
         $t_mn += $row['total_money'];
-        $item_discount += $row['discount_money'];
       }  
       $html .=  '</tbody>
       </table><br><br>';
 
       $html .= '<table class="table text-right"><tbody>';
-      $html .= '<tr id="subtotal">
-                    <td style="width: 33%"></td>
+      if($pur_order->discount_total > 0){
+        $html .= '<tr id="subtotal">
+                    <td width="33%"></td>
                      <td>'._l('subtotal').' </td>
                      <td class="subtotal">
-                        '.app_format_money($pur_order->subtotal,$base_currency->symbol).'
+                        '.app_format_money($t_mn,'').'
                      </td>
-                  </tr>';
-
-      $html .= $tax_data['pdf_html'];
-
-      if(($pur_order->discount_total + $item_discount) > 0){
-        $html .= '
-                  
+                  </tr>
                   <tr id="subtotal">
-                  <td style="width: 33%"></td>
-                     <td>'._l('discount_total(money)').'</td>
+                  <td width="33%"></td>
+                     <td>'._l('discount(%)').'(%)'.'</td>
                      <td class="subtotal">
-                        '.app_format_money(($pur_order->discount_total + $item_discount), $base_currency->symbol).'
+                        '.app_format_money($pur_order->discount_percent,'').' %'.'
                      </td>
-                  </tr>';
-      }
-
-      if($pur_order->shipping_fee  > 0){
-        $html .= '
-                  
+                  </tr>
                   <tr id="subtotal">
-                  <td style="width: 33%"></td>
-                     <td>'._l('pur_shipping_fee').'</td>
+                  <td width="33%"></td>
+                     <td>'._l('discount(money)').'</td>
                      <td class="subtotal">
-                        '.app_format_money($pur_order->shipping_fee, $base_currency->symbol).'
+                        '.app_format_money($pur_order->discount_total, '').'
                      </td>
                   </tr>';
       }
       $html .= '<tr id="subtotal">
-                 <td style="width: 33%"></td>
+                 <td width="33%"></td>
                  <td>'. _l('total').'</td>
                  <td class="subtotal">
-                    '. app_format_money($pur_order->total, $base_currency->symbol).'
+                    '. app_format_money($pur_order->total, '').'
                  </td>
               </tr>';
 
-      $html .= ' </tbody></table><br><br>';
+      $html .= ' </tbody></table>';
 
-    $custom_fields = get_custom_fields('pur_order');
-     foreach($custom_fields as $field){
-      $value = get_custom_field_value($pur_order->id,$field['id'],'pur_order');
-          if($value == ''){continue;}
-      $html .= '<span class="">
-      <strong>'.$field['name'].': </strong>'.$value.'
-      </span><br>';
-      } 
+      $html .= '<div style="page-break-before:always">&nbsp;</div>';
 
       $html .= '<div class="col-md-12 mtop15">
-                        <h4>'. _l('terms_and_conditions').':</h4><p>'. $pur_order->terms .'</p>
-                       
-                     </div>';
-      if(count($list_approve_status) > 0){
-          $html .= '<br>
-          <br>
-          <br>
-          <br>';
-
-          $html .=  '<table class="table">
-            <tbody>
-              <tr>';
-
-            foreach ($list_approve_status as $value) {
-         $html .= '<td class="td_appr">';
-            if($value['action'] == 'sign'){
-                $html .= '<h3>'.mb_strtoupper(get_staff_full_name($value['staffid'])).'</h3>';
-                if($value['approve'] == 2){ 
-                    $html .= '<img src="'.FCPATH. 'modules/purchase/uploads/pur_order/signature/'.$pur_order->id.'/signature_'.$value['id'].'.png" class="img_style">';
-                }
-                    
-            }else{ 
-            $html .= '<h3>'.mb_strtoupper(get_staff_full_name($value['staffid'])).'</h3>';
-                  if($value['approve'] == 2){ 
-            $html .= '<img src="'.FCPATH.'modules/purchase/uploads/approval/approved.png" class="img_style">';
-                 }elseif($value['approve'] == 3){
-            $html .= '<img src="'.FCPATH.'modules/purchase/uploads/approval/rejected.png" class="img_style">';
-                 }
-                  
-                    }
-           $html .= '</td>';
-            }
-           
-         $html .= '</tr>
-            </tbody>
-          </table>';
-        
-    }
-      $html .=  '<link href="' . FCPATH.'modules/purchase/assets/css/pur_order_pdf.css' . '"  rel="stylesheet" type="text/css" />';
+            <p class="bold"><b>'. _l('estimate_add_edit_vendor_note').':</b> '. nl2br($pur_order->vendornote).'</p>
+            <p class="bold"><b>'. _l('terms_and_conditions').':</b> '. nl2br($pur_order->terms).'</p>
+            </div>';
+      $html .= '<br>
+      <br>
+      <br>
+      <br>
+      <table class="table">
+        <tbody>
+          <tr>';
+     
+            $html .= '<td class="td_width_55"></td><td class="td_ali_font"><h3>'.mb_strtoupper(_l('orderer')).'</h3></td>
+            </tr>
+        </tbody>
+      </table>';
+      $html .= '<link href="' . module_dir_url(PURCHASE_MODULE_NAME, 'assets/css/pur_order_pdf.css') . '"  rel="stylesheet" type="text/css" />';
       return $html;
     }
 
@@ -13879,21 +13828,24 @@ class Purchase_model extends App_Model
                     $data['mail_to'] = $value['email'];
                     $data['pur_request_id'] = $id;
                     $data = (object) $data;
-                    mail_template('purchase_request_to_approver','purchase',$data);
+                    $template = mail_template('purchase_request_to_approver','purchase',$data);
+                    $template->send();
                 }
 
                 if($type == 'purchase_order') {
                     $data['mail_to'] = $value['email'];
                     $data['po_id'] = $id;
                     $data = (object) $data;
-                    mail_template('purchase_order_to_approver','purchase',$data);
+                    $template = mail_template('purchase_order_to_approver','purchase',$data);
+                    $template->send();
                 }
 
                 if($type == 'quotation') {
                     $data['mail_to'] = $value['email'];
                     $data['pur_estimate_id'] = $id;
                     $data = (object) $data;
-                    mail_template('purchase_quotation_to_approver','purchase',$data);
+                    $template = mail_template('purchase_quotation_to_approver','purchase',$data);
+                    $template->send();
                 }
             }
         }
@@ -13957,7 +13909,8 @@ class Purchase_model extends App_Model
                     $data['mail_to'] = $value['email'];
                     $data['pur_request_id'] = $id;
                     $data = (object) $data;
-                    mail_template('purchase_request_to_sender','purchase',$data);
+                    $template = mail_template('purchase_request_to_sender','purchase',$data);
+                    $template->send();
                 }
 
                 if($type == 'purchase_order') {
@@ -13965,16 +13918,72 @@ class Purchase_model extends App_Model
                     $data['po_id'] = $id;
                     $data['vendor_name'] = $vendor_name;
                     $data = (object) $data;
-                    mail_template('purchase_order_to_sender','purchase',$data);
+                    $template = mail_template('purchase_order_to_sender','purchase',$data);
+                    $template->send();
                 }
 
                 if($type == 'quotation') {
                     $data['mail_to'] = $value['email'];
                     $data['pur_estimate_id'] = $id;
                     $data = (object) $data;
-                    mail_template('purchase_quotation_to_sender','purchase',$data);
+                    $template = mail_template('purchase_quotation_to_sender','purchase',$data);
+                    $template->send();
                 }
             }
         }
+    }
+
+    public function save_purchase_files($related, $id)
+    {
+        $uploadedFiles = handle_purchase_attachments_array($related, $id);
+        if ($uploadedFiles && is_array($uploadedFiles)) {
+            foreach ($uploadedFiles as $file) {
+                $data = array();
+                $data['dateadded'] = date('Y-m-d H:i:s');
+                $data['rel_type'] = $related;
+                $data['rel_id'] = $id;
+                $data['staffid'] = get_staff_user_id();
+                $data['attachment_key'] = app_generate_hash();
+                $data['file_name'] = $file['file_name'];
+                $data['filetype']  = $file['filetype'];
+                $this->db->insert(db_prefix() . 'purchase_files', $data);
+            }
+        }
+        return true;
+    }
+
+    public function get_purchase_attachments($related, $id)
+    {
+        $this->db->where('rel_id', $id);
+        $this->db->where('rel_type', $related);
+        $this->db->order_by('dateadded', 'desc');
+        $attachments = $this->db->get(db_prefix() . 'purchase_files')->result_array();
+        return $attachments;
+    }
+
+    /**
+     * Remove attachment by id
+     * @param  mixed $id attachment id
+     * @return boolean
+     */
+    public function delete_purchase_attachment($id)
+    {
+        $deleted = false;
+        $this->db->where('id', $id);
+        $attachment = $this->db->get(db_prefix() . 'purchase_files')->row();
+        if ($attachment) {
+            if (unlink(get_upload_path_by_type('purchase') . $attachment->rel_type . '/' . $attachment->rel_id . '/' . $attachment->file_name)) {
+                $this->db->where('id', $attachment->id);
+                $this->db->delete(db_prefix() . 'purchase_files');
+                $deleted = true;
+            }
+            // Check if no attachments left, so we can delete the folder also
+            $other_attachments = list_files(get_upload_path_by_type('purchase') . $attachment->rel_type . '/' . $attachment->rel_id);
+            if (count($other_attachments) == 0) {
+                delete_dir(get_upload_path_by_type('purchase') . $attachment->rel_type . '/' . $attachment->rel_id);
+            }
+        }
+
+        return $deleted;
     }
 }

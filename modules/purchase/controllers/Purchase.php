@@ -555,6 +555,7 @@ class purchase extends AdminController
     		$data['pur_request_detail'] = json_encode($this->purchase_model->get_pur_request_detail($id));
     		$data['pur_request'] = $this->purchase_model->get_purchase_request($id);
             $data['taxes_data'] = $this->purchase_model->get_html_tax_pur_request($id);
+            $data['attachments'] = $this->purchase_model->get_purchase_attachments('pur_request', $id);
     		$data['title'] = _l('edit');
     	}
 
@@ -679,6 +680,7 @@ class purchase extends AdminController
         $data['taxes'] = $this->purchase_model->get_taxes();
         $data['pur_request_attachments'] = $this->purchase_model->get_purchase_request_attachments($id);
         $data['check_approval_setting'] = $this->purchase_model->check_approval_setting($data['pur_request']->project,'pur_request',0);
+        $data['attachments'] = $this->purchase_model->get_purchase_attachments('pur_request', $id);
 
         $this->load->view('purchase_request/view_pur_request', $data);
 
@@ -1478,6 +1480,7 @@ class purchase extends AdminController
         $data['list_approve_status'] = $this->purchase_model->get_list_approval_details($id,'pur_order');
         $data['tax_data'] = $this->purchase_model->get_html_tax_pur_order($id);
         $data['check_approval_setting'] = $this->purchase_model->check_approval_setting($estimate->project,'pur_order',0);
+        $data['attachments'] = $this->purchase_model->get_purchase_attachments('pur_order', $id);
         
         if ($to_return == false) {
             $this->load->view('purchase_order/pur_order_preview', $data);
@@ -1531,6 +1534,7 @@ class purchase extends AdminController
         } else {
             $data['pur_order_detail'] = $this->purchase_model->get_pur_order_detail($id);
             $data['pur_order'] = $this->purchase_model->get_pur_order($id);
+            $data['attachments'] = $this->purchase_model->get_purchase_attachments('pur_order', $id);
 
             $currency_rate = 1;
             if($data['pur_order']->currency != 0 && $data['pur_order']->currency_rate != null){
@@ -1575,7 +1579,7 @@ class purchase extends AdminController
 
         $data['invoices'] = $this->purchase_model->get_invoice_for_pr();
         $data['pur_request'] = $this->purchase_model->get_pur_request_by_status(2);
-        $data['projects'] = $this->projects_model->get();
+        $data['projects'] = $this->projects_model->get_items();
         $data['ven'] = $this->input->get('vendor');
         $data['taxes'] = $this->purchase_model->get_taxes();
         $data['staff']             = $this->staff_model->get('', ['active' => 1]);
@@ -8712,6 +8716,12 @@ class purchase extends AdminController
             $response = $this->purchase_model->find_approval_setting($this->input->post());
         }
         echo json_encode($response);
+    }
+
+    public function delete_attachment($id)
+    {
+        $this->purchase_model->delete_purchase_attachment($id);
+        redirect($_SERVER['HTTP_REFERER']);
     }
 
 }
