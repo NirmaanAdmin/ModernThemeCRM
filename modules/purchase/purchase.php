@@ -121,6 +121,8 @@ register_merge_fields('purchase/merge_fields/purchase_request_to_approver_merge_
 register_merge_fields('purchase/merge_fields/purchase_request_to_sender_merge_fields');
 register_merge_fields('purchase/merge_fields/purchase_order_to_approver_merge_fields');
 register_merge_fields('purchase/merge_fields/purchase_order_to_sender_merge_fields');
+register_merge_fields('purchase/merge_fields/purchase_quotation_to_approver_merge_fields');
+register_merge_fields('purchase/merge_fields/purchase_quotation_to_sender_merge_fields');
 
 
 hooks()->add_filter('other_merge_fields_available_for', 'purchase_register_other_merge_fields');

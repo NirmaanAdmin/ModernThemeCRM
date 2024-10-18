@@ -869,6 +869,7 @@ class purchase extends AdminController
             $title = _l('create_new_estimate');
         } else {
             $estimate = $this->purchase_model->get_estimate($id);
+            $data['attachments'] = $this->purchase_model->get_purchase_attachments('pur_quotation', $id);
 
             $data['tax_data'] = $this->purchase_model->get_html_tax_pur_estimate($id);
             
@@ -938,7 +939,7 @@ class purchase extends AdminController
         $data['vendors'] = $this->purchase_model->get_vendor();
         $data['pur_request'] = $this->purchase_model->get_pur_request_by_status(2);
         $data['units'] = $this->purchase_model->get_units();
-        $data['projects'] = $this->projects_model->get();
+        $data['projects'] = $this->projects_model->get_items();
        
         $data['title']             = $title;
         $this->load->view('quotations/estimate', $data);
@@ -1038,6 +1039,7 @@ class purchase extends AdminController
         $data['list_approve_status'] = $this->purchase_model->get_list_approval_details($id,'pur_quotation');
         $data['tax_data'] = $this->purchase_model->get_html_tax_pur_estimate($id);
         $data['check_approval_setting'] = $this->purchase_model->check_approval_setting($estimate->project,'pur_quotation',0);
+        $data['attachments'] = $this->purchase_model->get_purchase_attachments('pur_quotation', $id);
         
         if ($to_return == false) {
             $this->load->view('quotations/estimate_preview_template', $data);

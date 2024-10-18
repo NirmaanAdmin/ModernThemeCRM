@@ -1735,6 +1735,11 @@ class Purchase_model extends App_Model
 
         $this->db->insert(db_prefix() . 'pur_estimates', $data);
         $insert_id = $this->db->insert_id();
+        $this->send_mail_to_approver($data, 'pur_quotation', 'quotation', $insert_id);
+        if($data['status'] == 2) {
+            $this->send_mail_to_sender('quotation', $data['status'], $insert_id);
+        }
+        $this->save_purchase_files('pur_quotation', $insert_id);
 
         if ($insert_id) {
             $total = [];
@@ -1894,6 +1899,7 @@ class Purchase_model extends App_Model
 
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'pur_estimates', $data);
+        $this->save_purchase_files('pur_quotation', $id);
 
         if ($this->db->affected_rows() > 0) {
             if ($original_status != $data['status']) {
@@ -2144,6 +2150,9 @@ class Purchase_model extends App_Model
         $this->db->where('id',$id);
         $this->db->update(db_prefix().'pur_estimates',['status' => $status]);
         if($this->db->affected_rows() > 0){
+            if($status == 2 || $status == 3) {
+                $this->send_mail_to_sender('quotation', $status, $id);
+            }
             return true;
         }
         return false;
@@ -3654,15 +3663,15 @@ class Purchase_model extends App_Model
       <br><br>
       ';
 
-      $html .=  '<table class="table purorder-item">
+      $html .=  '<table class="table purorder-item" style="width: 100%">
         <thead>
           <tr>
-            <th class="thead-dark">'._l('items').'</th>
-            <th class="thead-dark">'._l('decription').'</th>
-            <th class="thead-dark" align="right">'._l('unit').'</th>
-            <th class="thead-dark" align="right">'._l('unit_price').'</th>
-            <th class="thead-dark" align="right">'._l('quantity').'</th>
-            <th class="thead-dark" align="right">'._l('into_money').'</th>
+            <th class="thead-dark" style="width: 15%">'._l('items').'</th>
+            <th class="thead-dark" style="width: 25%">'._l('decription').'</th>
+            <th class="thead-dark" align="right" style="width: 15%">'._l('unit').'</th>
+            <th class="thead-dark" align="right" style="width: 15%">'._l('unit_price').'</th>
+            <th class="thead-dark" align="right" style="width: 15%">'._l('quantity').'</th>
+            <th class="thead-dark" align="right" style="width: 15%">'._l('into_money').'</th>
           </tr>
         </thead>
         <tbody>';
@@ -3670,12 +3679,12 @@ class Purchase_model extends App_Model
         $items = $this->get_items_by_id($row['item_code']);
         $units = $this->get_units_by_id($row['unit_id']);
         $html .= '<tr nobr="true" class="sortable">
-            <td>'.$items->commodity_code.' - '.$items->description.'</td>
-            <td>'.$row['description'].'</td>
-            <td align="right">'.$units->unit_name.'</td>
-            <td align="right">'.app_format_money($row['unit_price'],'').'</td>
-            <td align="right">'.$row['quantity'].'</td>
-            <td align="right">'.app_format_money($row['into_money'],'').'</td>
+            <td style="width: 15%">'.$items->commodity_code.' - '.$items->description.'</td>
+            <td style="width: 25%">'.str_replace("<br />"," ",$row['description']).'</td>
+            <td align="right" style="width: 15%">'.$units->unit_name.'</td>
+            <td align="right" style="width: 15%">'.app_format_money($row['unit_price'],'').'</td>
+            <td align="right" style="width: 15%">'.$row['quantity'].'</td>
+            <td align="right" style="width: 15%">'.app_format_money($row['into_money'],'').'</td>
           </tr>';
       }  
       $html .=  '</tbody>
@@ -4333,18 +4342,18 @@ class Purchase_model extends App_Model
       <br><br>
       ';
 
-      $html .=  '<table class="table purorder-item">
+      $html .=  '<table class="table purorder-item" style="width: 100%">
         <thead>
           <tr>
-            <th class="thead-dark">'._l('items').'</th>
-            <th class="thead-dark" align="right">'._l('item_description').'</th>
-            <th class="thead-dark" align="right">'._l('unit_price').'</th>
-            <th class="thead-dark" align="right">'._l('quantity').'</th>
+            <th class="thead-dark" style="width: 15%">'._l('items').'</th>
+            <th class="thead-dark" align="left" style="width: 25%">'._l('item_description').'</th>
+            <th class="thead-dark" align="right" style="width: 12%">'._l('unit_price').'</th>
+            <th class="thead-dark" align="right" style="width: 12%">'._l('quantity').'</th>
          
-            <th class="thead-dark" align="right">'._l('tax').'</th>
+            <th class="thead-dark" align="right" style="width: 12%">'._l('tax').'</th>
  
-            <th class="thead-dark" align="right">'._l('discount').'</th>
-            <th class="thead-dark" align="right">'._l('total').'</th>
+            <th class="thead-dark" align="right" style="width: 12%">'._l('discount').'</th>
+            <th class="thead-dark" align="right" style="width: 12%">'._l('total').'</th>
           </tr>
           </thead>
           <tbody>';
@@ -4353,15 +4362,15 @@ class Purchase_model extends App_Model
         $items = $this->get_items_by_id($row['item_code']);
         $units = $this->get_units_by_id($row['unit_id']);
         $html .= '<tr nobr="true" class="sortable">
-            <td >'.$items->commodity_code.' - '.$items->description.'</td>
-            <td align="left">'.$row['description'].'</td>
-            <td align="right">'.app_format_money($row['unit_price'],'').'</td>
-            <td align="right">'.$row['quantity'].'</td>
+            <td style="width: 15%">'.$items->commodity_code.' - '.$items->description.'</td>
+            <td align="left" style="width: 25%">'.str_replace("<br />"," ",$row['description']).'</td>
+            <td align="right" style="width: 12%">'.app_format_money($row['unit_price'],'').'</td>
+            <td align="right" style="width: 12%">'.$row['quantity'].'</td>
          
-            <td align="right">'.app_format_money($row['total'] - $row['into_money'],'').'</td>
+            <td align="right" style="width: 12%">'.app_format_money($row['total'] - $row['into_money'],'').'</td>
        
-            <td align="right">'.app_format_money($row['discount_money'],'').'</td>
-            <td align="right">'.app_format_money($row['total_money'],'').'</td>
+            <td align="right" style="width: 12%">'.app_format_money($row['discount_money'],'').'</td>
+            <td align="right" style="width: 12%">'.app_format_money($row['total_money'],'').'</td>
           </tr>';
 
         $t_mn += $row['total_money'];
@@ -6580,53 +6589,30 @@ class Purchase_model extends App_Model
         $month = date('m',strtotime($pur_estimate->date));
         $year = date('Y',strtotime($pur_estimate->date));
         $tax_data = $this->get_html_tax_pur_estimate($pur_estimate_id);
+        $logo = '';
+        $company_logo = get_option('company_logo_dark');
+        if(!empty($company_logo)) {
+            $logo = '<img src="' . base_url('uploads/company/' . $company_logo) . '" width="230" height="100">';
+        }
         
     $html = '<table class="table">
         <tbody>
           <tr>
-            <td class="font_td_cpn" style="width: 70%">'. _l('purchase_company_name').': '. $company_name.'</td>
-            <td rowspan="2" style="width: 30%" class="text-right">'.get_po_logo(get_option('pdf_logo_width')).'</td>
-            
-          </tr>
-          <tr>
-            <td class="font_500">'. _l('address').': '. $address.'</td>
-            <td></td>
-            
+            <td>
+                '.$logo.'
+                '.format_organization_info().'
+            </td>
+            <td style="position: absolute; float: right;">
+                <span style="text-align: right; font-size: 25px"><b>'.mb_strtoupper(_l('estimate')).'</b></span><br />
+                <span style="text-align: right;">'.format_pur_estimate_number($pur_estimate_id).'</span><br />
+                <span style="text-align: right;"><b>'. _l('estimate_add_edit_date').':</b> '. date('d-m-Y', strtotime($pur_estimate->date)).'</span><br />
+                <span style="text-align: right;"><b>'. _l('project').':</b> '. get_project_name_by_id($pur_estimate->project).'</span><br />
+                <span style="text-align: right;"><b>'. _l('add_from').':</b> '. get_staff_full_name($pur_estimate->addedfrom).'</span><br /><br />
+                <span style="text-align: right;">'.format_pdf_vendor_info($pur_estimate->vendor->userid).'</span><br />
+            </td>
           </tr>
         </tbody>
       </table>
-      <table class="table">
-        <tbody>
-          <tr>
-            
-            <td class="td_ali_font"><h2 class="h2_style">'.mb_strtoupper(_l('estimate')).'</h2></td>
-           
-          </tr>
-          <tr>
-            
-            <td class="align_cen">'. _l('days').' '.$day.' '._l('month').' '.$month.' '._l('year') .' '.$year.'</td>
-            
-          </tr>
-          
-        </tbody>
-      </table>
-      <table class="table">
-        <tbody>
-          <tr>
-            <td class="td_width_25"><h4>'. _l('add_from').':</h4></td>
-            <td class="td_width_75">'. get_staff_full_name($pur_estimate->addedfrom).'</td>
-          </tr>
-          <tr>
-            <td class="td_width_25"><h4>'. _l('vendor').':</h4></td>
-            <td class="td_width_75">'. get_vendor_company_name($pur_estimate->vendor->userid).'</td>
-          </tr>
-          
-        </tbody>
-      </table>
-
-      <h3>
-       '. pur_html_entity_decode(format_pur_estimate_number($pur_estimate_id)).'
-       </h3>
       <br><br>
       ';
 
@@ -6654,15 +6640,15 @@ class Purchase_model extends App_Model
 
         $html .= '<tr nobr="true" class="sortable">
             <td >'.$item_name.'</td>
-            <td align="right">'.app_format_money($row['unit_price'],$base_currency->symbol).'</td>
+            <td align="right">'.app_format_money($row['unit_price'],'').'</td>
             <td align="right">'.$row['quantity'].'</td>';
          
             if(get_option('show_purchase_tax_column') == 1){  
-                $html .= '<td align="right">'.app_format_money($row['total'] - $row['into_money'],$base_currency->symbol).'</td>';
+                $html .= '<td align="right">'.app_format_money($row['total'] - $row['into_money'],'').'</td>';
             }
        
-            $html .= '<td align="right">'.app_format_money($row['discount_money'],$base_currency->symbol).'</td>
-            <td align="right">'.app_format_money($row['total_money'],$base_currency->symbol).'</td>
+            $html .= '<td align="right">'.app_format_money($row['discount_money'],'').'</td>
+            <td align="right">'.app_format_money($row['total_money'],'').'</td>
           </tr>';
 
         $t_mn += $row['total_money'];
@@ -6675,7 +6661,7 @@ class Purchase_model extends App_Model
                     <td style="width: 33%"></td>
                      <td>'._l('subtotal').' </td>
                      <td class="subtotal">
-                        '.app_format_money($pur_estimate->subtotal,$base_currency->symbol).'
+                        '.app_format_money($pur_estimate->subtotal,'').'
                      </td>
                   </tr>';
       $html .= $tax_data['pdf_html'];
@@ -6684,7 +6670,7 @@ class Purchase_model extends App_Model
                   <td style="width: 33%"></td>
                      <td>'._l('discount(money)').'</td>
                      <td class="subtotal">
-                        '.app_format_money($pur_estimate->discount_total, $base_currency->symbol).'
+                        '.app_format_money($pur_estimate->discount_total, '').'
                      </td>
                   </tr>';
       }
@@ -6693,7 +6679,7 @@ class Purchase_model extends App_Model
                   <td style="width: 33%"></td>
                      <td>'._l('pur_shipping_fee').'</td>
                      <td class="subtotal">
-                        '.app_format_money($pur_estimate->shipping_fee, $base_currency->symbol).'
+                        '.app_format_money($pur_estimate->shipping_fee, '').'
                      </td>
                   </tr>';
       }
@@ -6701,14 +6687,14 @@ class Purchase_model extends App_Model
                  <td style="width: 33%"></td>
                  <td>'. _l('total').'</td>
                  <td class="subtotal">
-                    '. app_format_money($pur_estimate->total, $base_currency->symbol).'
+                    '. app_format_money($pur_estimate->total, '').'
                  </td>
               </tr>';
 
       $html .= ' </tbody></table>';
 
       $html .= '<div class="col-md-12 mtop15">
-                        <h4>'. _l('terms_and_conditions').': </h4><p>'. pur_html_entity_decode($pur_estimate->terms).'</p>
+                        <h4>'. _l('terms_and_conditions').': </h4><p>'. nl2br($pur_estimate->terms).'</p>
                        
                      </div>';
       $html .= '<br>
