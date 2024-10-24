@@ -1195,7 +1195,7 @@ class Purchase_model extends App_Model
         $post_data['insert_id'] = $insert_id;
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, admin_url('purchase/curl_purchase_email'));
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -1758,7 +1758,7 @@ class Purchase_model extends App_Model
         $post_data['insert_id'] = $insert_id;
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, admin_url('purchase/curl_purchase_email'));
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -2373,7 +2373,7 @@ class Purchase_model extends App_Model
         $post_data['insert_id'] = $insert_id;
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, admin_url('purchase/curl_purchase_email'));
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
