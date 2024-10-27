@@ -25,9 +25,7 @@ class AdminController extends App_Controller
                 redirect_after_login_to_current_url();
             }
 
-            if(end($this->uri->segments) != 'curl_purchase_email') {
-                redirect(admin_url('authentication'));
-            }
+            redirect(admin_url('authentication'));
         }
 
         if ($this->uri->segment(3) != 'notifications_check') {
@@ -65,9 +63,7 @@ class AdminController extends App_Controller
         // Deleted or inactive but have session
         if (!$currentUser || $currentUser->active == 0) {
             $this->authentication_model->logout();
-            if(end($this->uri->segments) != 'curl_purchase_email') {
-                redirect(admin_url('authentication'));
-            }
+            redirect(admin_url('authentication'));
         }
 
         $GLOBALS['current_user'] = $currentUser;

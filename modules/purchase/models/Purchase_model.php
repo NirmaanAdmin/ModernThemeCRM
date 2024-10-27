@@ -1188,26 +1188,10 @@ class Purchase_model extends App_Model
       
         $this->db->insert(db_prefix().'pur_request',$data);
         $insert_id = $this->db->insert_id();
-        $post_data = array();
-        $post_data['data'] = $data;
-        $post_data['rel_type'] = 'pur_request';
-        $post_data['rel_name'] = 'purchase_request';
-        $post_data['insert_id'] = $insert_id;
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, admin_url('purchase/curl_purchase_email'));
-        // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 50);
-        curl_setopt($ch, CURLOPT_VERBOSE, 1);
-        $template_result = curl_exec($ch);
-        curl_close ($ch);
-        // $this->send_mail_to_approver($data, 'pur_request', 'purchase_request', $insert_id);
-        // if($data['status'] == 2) {
-        //     $this->send_mail_to_sender('purchase_request', $data['status'], $insert_id);
-        // }
+        $this->send_mail_to_approver($data, 'pur_request', 'purchase_request', $insert_id);
+        if($data['status'] == 2) {
+            $this->send_mail_to_sender('purchase_request', $data['status'], $insert_id);
+        }
         $this->save_purchase_files('pur_request', $insert_id);
         if($insert_id){
 
@@ -1751,26 +1735,10 @@ class Purchase_model extends App_Model
 
         $this->db->insert(db_prefix() . 'pur_estimates', $data);
         $insert_id = $this->db->insert_id();
-        $post_data = array();
-        $post_data['data'] = $data;
-        $post_data['rel_type'] = 'pur_quotation';
-        $post_data['rel_name'] = 'quotation';
-        $post_data['insert_id'] = $insert_id;
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, admin_url('purchase/curl_purchase_email'));
-        // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 50);
-        curl_setopt($ch, CURLOPT_VERBOSE, 1);
-        $template_result = curl_exec($ch);
-        curl_close ($ch);
-        // $this->send_mail_to_approver($data, 'pur_quotation', 'quotation', $insert_id);
-        // if($data['status'] == 2) {
-        //     $this->send_mail_to_sender('quotation', $data['status'], $insert_id);
-        // }
+        $this->send_mail_to_approver($data, 'pur_quotation', 'quotation', $insert_id);
+        if($data['status'] == 2) {
+            $this->send_mail_to_sender('quotation', $data['status'], $insert_id);
+        }
         $this->save_purchase_files('pur_quotation', $insert_id);
 
         if ($insert_id) {
@@ -2365,27 +2333,10 @@ class Purchase_model extends App_Model
 
         $this->db->insert(db_prefix() . 'pur_orders', $data);
         $insert_id = $this->db->insert_id();
-        $post_data = array();
-        $post_data['data'] = $data;
-        $post_data['data']['status'] = $data['approve_status'];
-        $post_data['rel_type'] = 'pur_order';
-        $post_data['rel_name'] = 'purchase_order';
-        $post_data['insert_id'] = $insert_id;
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, admin_url('purchase/curl_purchase_email'));
-        // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 50);
-        curl_setopt($ch, CURLOPT_VERBOSE, 1);
-        $template_result = curl_exec($ch);
-        curl_close ($ch);
-        // $this->send_mail_to_approver($data, 'pur_order', 'purchase_order', $insert_id);
-        // if($data['approve_status'] == 2) {
-        //     $this->send_mail_to_sender('purchase_order', $data['approve_status'], $insert_id);
-        // }
+        $this->send_mail_to_approver($data, 'pur_order', 'purchase_order', $insert_id);
+        if($data['approve_status'] == 2) {
+            $this->send_mail_to_sender('purchase_order', $data['approve_status'], $insert_id);
+        }
         $this->save_purchase_files('pur_order', $insert_id);
         if ($insert_id) {
             // Update next purchase order number in settings
