@@ -498,6 +498,10 @@ if ($config['csrf_protection'] == true
     $config['csrf_protection'] = false;
 }
 
+if($config['csrf_protection'] == true && strpos($_SERVER['REQUEST_URI'], 'curl_purchase_email') !== false) {
+    $config['csrf_protection'] = false;
+}
+
 /*
 |--------------------------------------------------------------------------
 | Output Compression
