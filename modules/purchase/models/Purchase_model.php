@@ -1188,26 +1188,10 @@ class Purchase_model extends App_Model
       
         $this->db->insert(db_prefix().'pur_request',$data);
         $insert_id = $this->db->insert_id();
-        // $this->send_mail_to_approver($data, 'pur_request', 'purchase_request', $insert_id);
-        // if($data['status'] == 2) {
-        //     $this->send_mail_to_sender('purchase_request', $data['status'], $insert_id);
-        // }
-        $post_data = array();
-        $post_data['data'] = $data;
-        $post_data['rel_type'] = 'pur_request';
-        $post_data['rel_name'] = 'purchase_request';
-        $post_data['insert_id'] = $insert_id;
-        $post_data['get_staff_user_id'] = get_staff_user_id();
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, admin_url('purchase/curl_purchase_email'));
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 50);
-        curl_setopt($ch, CURLOPT_VERBOSE, 1);
-        $template_result = curl_exec($ch);
-        curl_close ($ch);
+        $this->send_mail_to_approver($data, 'pur_request', 'purchase_request', $insert_id);
+        if($data['status'] == 2) {
+            $this->send_mail_to_sender('purchase_request', $data['status'], $insert_id);
+        }
         $this->save_purchase_files('pur_request', $insert_id);
         if($insert_id){
 
@@ -1751,26 +1735,10 @@ class Purchase_model extends App_Model
 
         $this->db->insert(db_prefix() . 'pur_estimates', $data);
         $insert_id = $this->db->insert_id();
-        // $this->send_mail_to_approver($data, 'pur_quotation', 'quotation', $insert_id);
-        // if($data['status'] == 2) {
-        //     $this->send_mail_to_sender('quotation', $data['status'], $insert_id);
-        // }
-        $post_data = array();
-        $post_data['data'] = $data;
-        $post_data['rel_type'] = 'pur_quotation';
-        $post_data['rel_name'] = 'quotation';
-        $post_data['insert_id'] = $insert_id;
-        $post_data['get_staff_user_id'] = get_staff_user_id();
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, admin_url('purchase/curl_purchase_email'));
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 50);
-        curl_setopt($ch, CURLOPT_VERBOSE, 1);
-        $template_result = curl_exec($ch);
-        curl_close ($ch);
+        $this->send_mail_to_approver($data, 'pur_quotation', 'quotation', $insert_id);
+        if($data['status'] == 2) {
+            $this->send_mail_to_sender('quotation', $data['status'], $insert_id);
+        }
         $this->save_purchase_files('pur_quotation', $insert_id);
 
         if ($insert_id) {
@@ -2365,27 +2333,10 @@ class Purchase_model extends App_Model
 
         $this->db->insert(db_prefix() . 'pur_orders', $data);
         $insert_id = $this->db->insert_id();
-        // $this->send_mail_to_approver($data, 'pur_order', 'purchase_order', $insert_id);
-        // if($data['approve_status'] == 2) {
-        //     $this->send_mail_to_sender('purchase_order', $data['approve_status'], $insert_id);
-        // }
-        $post_data = array();
-        $post_data['data'] = $data;
-        $post_data['data']['status'] = $data['approve_status'];
-        $post_data['rel_type'] = 'pur_order';
-        $post_data['rel_name'] = 'purchase_order';
-        $post_data['insert_id'] = $insert_id;
-        $post_data['get_staff_user_id'] = get_staff_user_id();
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, admin_url('purchase/curl_purchase_email'));
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_NOSIGNAL, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 50);
-        curl_setopt($ch, CURLOPT_VERBOSE, 1);
-        $template_result = curl_exec($ch);
-        curl_close ($ch);
+        $this->send_mail_to_approver($data, 'pur_order', 'purchase_order', $insert_id);
+        if($data['approve_status'] == 2) {
+            $this->send_mail_to_sender('purchase_order', $data['approve_status'], $insert_id);
+        }
         $this->save_purchase_files('pur_order', $insert_id);
         if ($insert_id) {
             // Update next purchase order number in settings
@@ -13782,12 +13733,8 @@ class Purchase_model extends App_Model
         return $response;
     }
 
-    public function check_approval_setting($project, $related, $response = 0, $get_staff_user_id = 1)
+    public function check_approval_setting($project, $related, $response = 0)
     {
-        $user_id = get_staff_user_id();
-        if(empty($user_id)) {
-            $user_id = $get_staff_user_id;
-        }
         $check_status = false;
         $intersect = array();
         $this->db->select('*');
@@ -13819,7 +13766,7 @@ class Purchase_model extends App_Model
         } else {
             if(!empty($intersect)) {
                 $intersect = array_filter($intersect, function ($var) {
-                    return ($var['id'] == $user_id);
+                    return ($var['id'] == get_staff_user_id());
                 });
                 if(!empty($intersect)) {
                     $check_status = true;
@@ -13828,7 +13775,7 @@ class Purchase_model extends App_Model
         }
 
         $this->db->select('staffid as id', 'email', 'firstname', 'lastname');
-        $this->db->where('staffid', $user_id);
+        $this->db->where('staffid', get_staff_user_id());
         $this->db->where('admin', 1);
         $staffs = $this->db->get('tblstaff')->result_array();
         if(count($staffs) > 0) {
@@ -13837,13 +13784,9 @@ class Purchase_model extends App_Model
         return $check_status;
     }
 
-    public function send_mail_to_approver($fdata, $related, $type, $id, $get_staff_user_id = 1)
+    public function send_mail_to_approver($fdata, $related, $type, $id)
     {
-        $user_id = get_staff_user_id();
-        if(empty($user_id)) {
-            $user_id = $get_staff_user_id;
-        }
-        $approver_list = $this->check_approval_setting($fdata['project'], $related, 1, $get_staff_user_id);
+        $approver_list = $this->check_approval_setting($fdata['project'], $related, 1);
         $this->db->select('staffid as id, "approve" as action', FALSE);
         $this->db->where('admin', 1);
         $this->db->or_where('staffid', $fdata['requester']);
@@ -13859,7 +13802,7 @@ class Purchase_model extends App_Model
             $this->db->where_in('staffid', $approver_list);
             $approver_list = $this->db->get('tblstaff')->result_array();
 
-            $this->db->where('staffid', $user_id);
+            $this->db->where('staffid', get_staff_user_id());
             $login_staff = $this->db->get('tblstaff')->row();
             
             foreach ($approver_list as $key => $value) {
@@ -13894,12 +13837,8 @@ class Purchase_model extends App_Model
         }
     }
 
-    public function send_mail_to_sender($type, $status, $id, $get_staff_user_id = 1)
+    public function send_mail_to_sender($type, $status, $id)
     {
-        $user_id = get_staff_user_id();
-        if(empty($user_id)) {
-            $user_id = $get_staff_user_id;
-        }
         $requester = 0;
         $vendor_id = 0;
         $vendor_name = '';
@@ -13930,7 +13869,7 @@ class Purchase_model extends App_Model
         $this->db->select('email, firstname, lastname');
         $this->db->where('admin', 1);
         $this->db->or_where('staffid', $requester);
-        $this->db->or_where('staffid', $user_id);
+        $this->db->or_where('staffid', get_staff_user_id());
         $staffs = $this->db->get('tblstaff')->result_array();
 
         if($type == 'purchase_order') {
@@ -13944,7 +13883,7 @@ class Purchase_model extends App_Model
 
         if(!empty($staffs)) {
 
-            $this->db->where('staffid', $user_id);
+            $this->db->where('staffid', get_staff_user_id());
             $login_staff = $this->db->get('tblstaff')->row();
 
             foreach ($staffs as $key => $value) {

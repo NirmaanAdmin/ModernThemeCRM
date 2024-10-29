@@ -8726,23 +8726,4 @@ class purchase extends AdminController
         redirect($_SERVER['HTTP_REFERER']);
     }
 
-    public function curl_purchase_email()
-    {
-        $data = $this->input->post();
-        $info = $data['data'];
-        $rel_type = $data['rel_type'];
-        $rel_name = $data['rel_name'];
-        $insert_id = $data['insert_id'];
-        $get_staff_user_id = $data['get_staff_user_id'];
-
-        $this->purchase_model->send_mail_to_approver($info, $rel_type, $rel_name, $insert_id, $get_staff_user_id);
-        if($info['status'] == 2) {
-            $this->purchase_model->send_mail_to_sender($rel_name, $info['status'], $insert_id, $get_staff_user_id);
-        }
-
-        $response = array();
-        $response['status'] = 200;
-        echo json_encode($response);
-    }
-
 }
